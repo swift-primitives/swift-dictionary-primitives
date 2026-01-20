@@ -1,8 +1,8 @@
 // ===----------------------------------------------------------------------===//
 //
-// This source file is part of the swift-standards open source project
+// This source file is part of the swift-primitives open source project
 //
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-standards project authors
+// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-primitives project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -11,9 +11,12 @@
 
 public import Set_Primitives
 
-// MARK: - Sequence
+// MARK: - Sequence (Copyable values only)
+//
+// Sequence and Collection conformances are only available when Value is Copyable
+// because iteration requires copying elements. For ~Copyable values, use forEach(_:).
 
-extension Dictionary.Ordered: Sequence {
+extension Dictionary_Primitives.Dictionary.Ordered: Sequence where Value: Copyable {
     public struct Iterator: IteratorProtocol {
         @usableFromInline
         var index: Int
@@ -22,34 +25,40 @@ extension Dictionary.Ordered: Sequence {
         let keys: Set<Key>.Ordered
 
         @usableFromInline
-        let values: ContiguousArray<Value>
+        let valueStorage: ValueStorage
 
         @usableFromInline
-        init(keys: Set<Key>.Ordered, values: ContiguousArray<Value>) {
+        let count: Int
+
+        @usableFromInline
+        init(keys: Set<Key>.Ordered, valueStorage: ValueStorage) {
             self.index = 0
             self.keys = keys
-            self.values = values
+            self.valueStorage = valueStorage
+            self.count = valueStorage.header
         }
 
         @inlinable
         public mutating func next() -> (key: Key, value: Value)? {
-            guard index < keys.count else { return nil }
-            defer { index += 1 }
-            return (keys[index], values[index])
+            guard index < count else { return nil }
+            let key = keys[index]
+            let value = valueStorage._readValue(at: index)
+            index += 1
+            return (key, value)
         }
     }
 
     @inlinable
     public func makeIterator() -> Iterator {
-        Iterator(keys: _keys, values: _values)
+        Iterator(keys: _keys, valueStorage: _valueStorage)
     }
 }
 
-extension Dictionary.Ordered.Iterator: Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives.Dictionary.Ordered.Iterator: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 
-// MARK: - Collection
+// MARK: - Collection (Copyable values only)
 
-extension Dictionary.Ordered: Collection {
+extension Dictionary_Primitives.Dictionary.Ordered: Collection where Value: Copyable {
     public typealias Index = Int
     public typealias Element = (key: Key, value: Value)
 
@@ -67,22 +76,22 @@ extension Dictionary.Ordered: Collection {
     @inlinable
     public subscript(position: Index) -> Element {
         precondition(position >= 0 && position < count, "Index out of bounds")
-        return (_keys[position], _values[position])
+        return (_keys[position], _valueStorage._readValue(at: position))
     }
 }
 
-// MARK: - BidirectionalCollection
+// MARK: - BidirectionalCollection (Copyable values only)
 
-extension Dictionary.Ordered: BidirectionalCollection {
+extension Dictionary_Primitives.Dictionary.Ordered: BidirectionalCollection where Value: Copyable {
     @inlinable
     public func index(before i: Index) -> Index {
         i - 1
     }
 }
 
-// MARK: - RandomAccessCollection
+// MARK: - RandomAccessCollection (Copyable values only)
 
-extension Dictionary.Ordered: RandomAccessCollection {
+extension Dictionary_Primitives.Dictionary.Ordered: RandomAccessCollection where Value: Copyable {
     @inlinable
     public func distance(from start: Index, to end: Index) -> Int {
         end - start
@@ -103,3 +112,45 @@ extension Dictionary.Ordered: RandomAccessCollection {
         }
     }
 }
+
+// MARK: - Bounded Sequence (Copyable values only)
+
+extension Dictionary_Primitives.Dictionary.Ordered.Bounded: Sequence where Value: Copyable {
+    public struct Iterator: IteratorProtocol {
+        @usableFromInline
+        var index: Int
+
+        @usableFromInline
+        let keys: Set<Key>.Ordered
+
+        @usableFromInline
+        let valueStorage: Dictionary<Key, Value>.Ordered.ValueStorage
+
+        @usableFromInline
+        let count: Int
+
+        @usableFromInline
+        init(keys: Set<Key>.Ordered, valueStorage: Dictionary<Key, Value>.Ordered.ValueStorage) {
+            self.index = 0
+            self.keys = keys
+            self.valueStorage = valueStorage
+            self.count = valueStorage.header
+        }
+
+        @inlinable
+        public mutating func next() -> (key: Key, value: Value)? {
+            guard index < count else { return nil }
+            let key = keys[index]
+            let value = valueStorage._readValue(at: index)
+            index += 1
+            return (key, value)
+        }
+    }
+
+    @inlinable
+    public func makeIterator() -> Iterator {
+        Iterator(keys: _keys, valueStorage: _valueStorage)
+    }
+}
+
+extension Dictionary_Primitives.Dictionary.Ordered.Bounded.Iterator: @unchecked Sendable where Key: Sendable, Value: Sendable {}

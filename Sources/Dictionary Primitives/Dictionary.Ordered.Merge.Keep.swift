@@ -1,8 +1,8 @@
 // ===----------------------------------------------------------------------===//
 //
-// This source file is part of the swift-standards open source project
+// This source file is part of the swift-primitives open source project
 //
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-standards project authors
+// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-primitives project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -11,8 +11,12 @@
 
 public import Set_Primitives
 
-extension Dictionary.Ordered.Merge {
+// MARK: - Keep Type (Copyable values only)
+
+extension Dictionary_Primitives.Dictionary.Ordered.Merge {
     /// Namespace for keep-policy merge operations.
+    ///
+    /// Available only when `Value` is `Copyable`.
     public struct Keep {
         @usableFromInline
         var dict: Dictionary<Key, Value>.Ordered
@@ -24,9 +28,9 @@ extension Dictionary.Ordered.Merge {
     }
 }
 
-// MARK: - Keep Operations
+// MARK: - Keep Operations (Copyable values only)
 
-extension Dictionary.Ordered.Merge.Keep {
+extension Dictionary_Primitives.Dictionary.Ordered.Merge.Keep {
     /// Merges pairs, keeping the first value for duplicate keys.
     ///
     /// - Parameter pairs: The key-value pairs to merge.
@@ -34,7 +38,7 @@ extension Dictionary.Ordered.Merge.Keep {
     public mutating func first(_ pairs: some Sequence<(Key, Value)>) {
         for (key, value) in pairs {
             if !dict.contains(key) {
-                dict[key] = value
+                dict.set(key, value)
             }
         }
     }
@@ -48,10 +52,12 @@ extension Dictionary.Ordered.Merge.Keep {
             if dict.contains(key) {
                 // Update value without changing position
                 if let index = dict._keys.index(key) {
-                    dict._values[index] = value
+                    dict.makeUnique()
+                    _ = dict._valueStorage._moveValue(at: index)
+                    dict._valueStorage._initializeValue(at: index, to: value)
                 }
             } else {
-                dict[key] = value
+                dict.set(key, value)
             }
         }
     }

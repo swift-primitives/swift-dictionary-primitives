@@ -19,7 +19,7 @@ struct OrderedDictionaryTests {
 
     @Test("Set and get values")
     func setAndGetValues() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
 
         dict.values.set("apple", 1)
         dict.values.set("banana", 2)
@@ -33,7 +33,7 @@ struct OrderedDictionaryTests {
 
     @Test("Subscript set and get")
     func subscriptSetAndGet() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
 
         dict["a"] = 1
         dict["b"] = 2
@@ -53,7 +53,7 @@ struct OrderedDictionaryTests {
 
     @Test("Remove value")
     func removeValue() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
         dict["c"] = 3
@@ -69,7 +69,7 @@ struct OrderedDictionaryTests {
 
     @Test("Keys index lookup")
     func keysIndexLookup() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["first"] = 1
         dict["second"] = 2
         dict["third"] = 3
@@ -84,7 +84,7 @@ struct OrderedDictionaryTests {
 
     @Test("Insertion order preserved")
     func insertionOrderPreserved() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["charlie"] = 3
         dict["alpha"] = 1
         dict["bravo"] = 2
@@ -95,7 +95,7 @@ struct OrderedDictionaryTests {
 
     @Test("Update does not change order")
     func updateDoesNotChangeOrder() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
         dict["c"] = 3
@@ -110,7 +110,7 @@ struct OrderedDictionaryTests {
 
     @Test("Re-insertion goes to end")
     func reinsertionGoesToEnd() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
         dict["c"] = 3
@@ -126,7 +126,7 @@ struct OrderedDictionaryTests {
 
     @Test("Values modify")
     func valuesModify() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["counter"] = 0
 
         dict.values.modify("counter") { $0 += 1 }
@@ -137,7 +137,7 @@ struct OrderedDictionaryTests {
 
     @Test("Merge keep first")
     func mergeKeepFirst() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
 
@@ -150,7 +150,7 @@ struct OrderedDictionaryTests {
 
     @Test("Merge keep last")
     func mergeKeepLast() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
 
@@ -169,7 +169,7 @@ struct OrderedDictionaryTests {
 
     @Test("Init from pairs")
     func initFromPairs() throws {
-        let dict = try [String: Int].Ordered([
+        let dict = try Dictionary<String, Int>.Ordered([
             ("a", 1),
             ("b", 2),
             ("c", 3)
@@ -183,8 +183,8 @@ struct OrderedDictionaryTests {
 
     @Test("Init throws on duplicate")
     func initThrowsOnDuplicate() {
-        #expect(throws: [String: Int].Ordered.Error.self) {
-            _ = try [String: Int].Ordered([
+        #expect(throws: Dictionary<String, Int>.Ordered.Error.self) {
+            _ = try Dictionary<String, Int>.Ordered([
                 ("a", 1),
                 ("b", 2),
                 ("a", 3)  // Duplicate
@@ -194,7 +194,7 @@ struct OrderedDictionaryTests {
 
     @Test("Init with uniquing closure")
     func initWithUniquingClosure() {
-        let dict = [String: Int].Ordered(
+        let dict = Dictionary<String, Int>.Ordered(
             [("a", 1), ("b", 2), ("a", 10)],
             uniquingKeysWith: { $0 + $1 }
         )
@@ -207,7 +207,7 @@ struct OrderedDictionaryTests {
 
     @Test("Index access")
     func indexAccess() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
         dict["c"] = 3
@@ -219,7 +219,7 @@ struct OrderedDictionaryTests {
 
     @Test("Iteration")
     func iteration() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["x"] = 10
         dict["y"] = 20
         dict["z"] = 30
@@ -237,7 +237,7 @@ struct OrderedDictionaryTests {
 
     @Test("Bidirectional iteration")
     func bidirectionalIteration() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
         dict["c"] = 3
@@ -253,7 +253,7 @@ struct OrderedDictionaryTests {
 
     @Test("CoW: mutation does not affect original")
     func cowMutationDoesNotAffectOriginal() {
-        var original = [String: Int].Ordered()
+        var original = Dictionary<String, Int>.Ordered()
         original["a"] = 1
         original["b"] = 2
         original["c"] = 3
@@ -270,7 +270,7 @@ struct OrderedDictionaryTests {
 
     @Test("CoW: multiple copies are independent")
     func cowMultipleCopiesIndependent() {
-        var original = [String: Int].Ordered()
+        var original = Dictionary<String, Int>.Ordered()
         original["a"] = 1
         original["b"] = 2
 
@@ -289,14 +289,14 @@ struct OrderedDictionaryTests {
 
     @Test("Empty dictionary")
     func emptyDictionary() {
-        let dict = [String: Int].Ordered()
+        let dict = Dictionary<String, Int>.Ordered()
 
         #expect(dict.isEmpty)
     }
 
     @Test("Clear")
     func clear() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
 
@@ -307,7 +307,7 @@ struct OrderedDictionaryTests {
 
     @Test("Contains")
     func contains() {
-        var dict = [String: Int].Ordered()
+        var dict = Dictionary<String, Int>.Ordered()
         dict["apple"] = 1
 
         #expect(dict.contains("apple"))
@@ -318,15 +318,15 @@ struct OrderedDictionaryTests {
 
     @Test("Equality")
     func equality() {
-        var a = [String: Int].Ordered()
+        var a = Dictionary<String, Int>.Ordered()
         a["x"] = 1
         a["y"] = 2
 
-        var b = [String: Int].Ordered()
+        var b = Dictionary<String, Int>.Ordered()
         b["x"] = 1
         b["y"] = 2
 
-        var c = [String: Int].Ordered()
+        var c = Dictionary<String, Int>.Ordered()
         c["y"] = 2
         c["x"] = 1  // Different order
 

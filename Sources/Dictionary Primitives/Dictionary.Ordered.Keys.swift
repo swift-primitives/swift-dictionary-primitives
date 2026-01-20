@@ -1,8 +1,8 @@
 // ===----------------------------------------------------------------------===//
 //
-// This source file is part of the swift-standards open source project
+// This source file is part of the swift-primitives open source project
 //
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-standards project authors
+// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-primitives project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -13,7 +13,7 @@ public import Set_Primitives
 
 // MARK: - Keys Accessor
 
-extension Dictionary.Ordered {
+extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
     /// Nested accessor for key operations.
     ///
     /// ```swift
@@ -22,28 +22,30 @@ extension Dictionary.Ordered {
     /// ```
     @inlinable
     public var keys: Keys {
-        Keys(dict: self)
+        Keys(keys: _keys)
     }
 }
 
 // MARK: - Keys Type
 
-extension Dictionary.Ordered {
+extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
     /// Namespace for key operations.
+    ///
+    /// Keys are always `Copyable` since `Key: Hashable` implies `Copyable`.
     public struct Keys {
         @usableFromInline
-        let dict: Dictionary<Key, Value>.Ordered
+        let _keys: Set<Key>.Ordered
 
         @usableFromInline
-        init(dict: Dictionary<Key, Value>.Ordered) {
-            self.dict = dict
+        init(keys: Set<Key>.Ordered) {
+            self._keys = keys
         }
     }
 }
 
 // MARK: - Keys Operations
 
-extension Dictionary.Ordered.Keys {
+extension Dictionary_Primitives.Dictionary.Ordered.Keys where Value: ~Copyable {
     /// Returns the index of the given key, or `nil` if not present.
     ///
     /// - Parameter key: The key to find.
@@ -51,13 +53,25 @@ extension Dictionary.Ordered.Keys {
     /// - Complexity: O(1) average.
     @inlinable
     public func index(_ key: Key) -> Int? {
-        dict._keys.index(key)
+        _keys.index(key)
     }
 
     /// All keys in order.
     @inlinable
     public var all: Set<Key>.Ordered {
-        dict._keys
+        _keys
+    }
+
+    /// The number of keys.
+    @inlinable
+    public var count: Int {
+        _keys.count
+    }
+
+    /// Whether the keys collection is empty.
+    @inlinable
+    public var isEmpty: Bool {
+        _keys.isEmpty
     }
 
     /// The key at the given index.
@@ -66,13 +80,19 @@ extension Dictionary.Ordered.Keys {
     /// - Precondition: The index must be in bounds.
     @inlinable
     public subscript(_ index: Int) -> Key {
-        dict._keys[index]
+        _keys[index]
+    }
+
+    /// Returns whether the given key exists.
+    @inlinable
+    public func contains(_ key: Key) -> Bool {
+        _keys.contains(key)
     }
 }
 
 // MARK: - Sequence Conformance
 
-extension Dictionary.Ordered.Keys: Sequence {
+extension Dictionary_Primitives.Dictionary.Ordered.Keys: Sequence {
     public struct Iterator: IteratorProtocol {
         @usableFromInline
         var base: Set<Key>.Ordered.Iterator
@@ -90,8 +110,8 @@ extension Dictionary.Ordered.Keys: Sequence {
 
     @inlinable
     public func makeIterator() -> Iterator {
-        Iterator(dict._keys)
+        Iterator(_keys)
     }
 }
 
-extension Dictionary.Ordered.Keys.Iterator: Sendable where Key: Sendable {}
+extension Dictionary_Primitives.Dictionary.Ordered.Keys.Iterator: Sendable where Key: Sendable {}
