@@ -11,6 +11,52 @@
 
 public import Set_Primitives
 
+// ===----------------------------------------------------------------------===//
+// MARK: - Semantic Invariants
+// ===----------------------------------------------------------------------===//
+//
+// This section documents the fundamental invariants that define Dictionary.Ordered.
+// These invariants MUST be preserved by all implementations, optimizations, and
+// future modifications.
+//
+// ## Canonical Ordering
+//
+// Key order is canonical. Values are strictly indexed by key order.
+//
+// - The ordered key set (`_keys: Set<Key>.Ordered`) is the source of truth for ordering
+// - Value storage indices correspond 1:1 with key indices
+// - `_keys[i]` and `_valueStorage[i]` always refer to the same key-value pair
+//
+// ## Ordering Semantics
+//
+// - Insertion appends to end: new keys always go to index `count`
+// - Update preserves position: changing a value for existing key does NOT move it
+// - Removal shifts indices: removing key at index `i` shifts all keys at `i+1...` down
+// - Re-insertion after removal goes to end: removed keys lose their position
+//
+// ## What Must Never Happen
+//
+// - Key and value arrays must never have different counts
+// - Key at index `i` must always map to value at index `i`
+// - Duplicate keys must never exist (enforced by Set<Key>.Ordered)
+// - Value storage must never contain uninitialized memory within `0..<count`
+//
+// ## What Optimizations Must Preserve
+//
+// - Iteration order equals insertion order (minus removals)
+// - Index-based access is O(1)
+// - Key lookup is O(1) average (hash-based)
+// - Equality considers order: `[a:1, b:2] != [b:2, a:1]`
+//
+// ## Copyable Boundaries
+//
+// - Keys are always Copyable (Hashable implies Copyable)
+// - Values may be ~Copyable (move-only)
+// - Copy-on-Write only applies when Value: Copyable
+// - Base methods use `consuming Value`; CoW methods use `Value`
+//
+// ===----------------------------------------------------------------------===//
+
 /// Namespace for ordered dictionary types.
 ///
 /// This shadows `Swift.Dictionary`. Use `Swift.Dictionary` or module-qualified

@@ -334,3 +334,244 @@ struct OrderedDictionaryTests {
         #expect(a != c)  // Order matters
     }
 }
+
+// MARK: - Invariant Stress Tests
+
+@Suite("Dictionary.Ordered - Invariant Stress Tests")
+struct OrderedDictionaryInvariantTests {
+
+    // MARK: - Merge Idempotence
+
+    @Test("Merge keep first is idempotent")
+    func mergeKeepFirstIdempotent() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
+
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with self should be idempotent
+        dict.merge.keep.first(dict.map { ($0.key, $0.value) })
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    @Test("Merge keep last is idempotent")
+    func mergeKeepLastIdempotent() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
+
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with self should be idempotent
+        dict.merge.keep.last(dict.map { ($0.key, $0.value) })
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    // MARK: - Merge Identity
+
+    @Test("Merge keep first with empty is identity")
+    func mergeKeepFirstEmptyIdentity() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with empty should be identity
+        dict.merge.keep.first([])
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    @Test("Merge keep last with empty is identity")
+    func mergeKeepLastEmptyIdentity() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with empty should be identity
+        dict.merge.keep.last([])
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    // MARK: - Empty Dictionary Edge Cases
+
+    @Test("Empty dictionary operations")
+    func emptyDictionaryEdgeCases() {
+        var empty = Dictionary<String, Int>.Ordered()
+
+        // Operations on empty dictionary
+        #expect(empty.isEmpty)
+        #expect(empty.count == 0)
+        #expect(empty["missing"] == nil)
+        #expect(!empty.contains("missing"))
+        #expect(empty.keys.index("missing") == nil)
+        #expect(empty.values.remove("missing") == nil)
+
+        // Merge into empty
+        empty.merge.keep.first([("a", 1)])
+        #expect(empty.count == 1)
+        #expect(empty["a"] == 1)
+    }
+
+    @Test("Empty merge into non-empty")
+    func emptyMergeIntoNonEmpty() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+
+        let originalKeys = Array(dict.keys)
+
+        // Merge empty into non-empty
+        let empty: [(String, Int)] = []
+        dict.merge.keep.first(empty)
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect(dict.count == 2)
+    }
+
+    // MARK: - Key-Value Index Correspondence
+
+    @Test("Key-value index correspondence after operations")
+    func keyValueIndexCorrespondence() {
+        var dict = Dictionary<String, Int>.Ordered()
+
+        // Build dictionary
+        for i in 0..<10 {
+            dict["key\(i)"] = i * 10
+        }
+
+        // Verify correspondence
+        for i in 0..<dict.count {
+            let key = dict.keys[i]
+            let pair = dict[index: i]
+            #expect(pair.key == key)
+            #expect(dict[key] == pair.value)
+        }
+
+        // Remove some elements
+        dict.values.remove("key3")
+        dict.values.remove("key7")
+
+        // Verify correspondence still holds
+        for i in 0..<dict.count {
+            let key = dict.keys[i]
+            let pair = dict[index: i]
+            #expect(pair.key == key)
+            #expect(dict[key] == pair.value)
+        }
+    }
+
+    // MARK: - Order Preservation Under Stress
+
+    @Test("Order preserved through many operations")
+    func orderPreservedThroughManyOperations() {
+        var dict = Dictionary<String, Int>.Ordered()
+        var expectedOrder: [String] = []
+
+        // Insert 50 elements
+        for i in 0..<50 {
+            let key = "key\(i)"
+            dict[key] = i
+            expectedOrder.append(key)
+        }
+
+        // Update values (should not change order)
+        for i in stride(from: 0, to: 50, by: 2) {
+            dict["key\(i)"] = i * 100
+        }
+
+        #expect(Array(dict.keys) == expectedOrder)
+
+        // Remove every 5th element
+        for i in stride(from: 0, to: 50, by: 5) {
+            dict.values.remove("key\(i)")
+            expectedOrder.removeAll { $0 == "key\(i)" }
+        }
+
+        #expect(Array(dict.keys) == expectedOrder)
+
+        // Re-insert removed elements (should go to end)
+        for i in stride(from: 0, to: 50, by: 5) {
+            dict["key\(i)"] = i * 1000
+            expectedOrder.append("key\(i)")
+        }
+
+        #expect(Array(dict.keys) == expectedOrder)
+    }
+
+    // MARK: - Duplicate Key Handling
+
+    @Test("Init throws on duplicate preserves partial state correctly")
+    func initThrowsOnDuplicatePartialState() {
+        // When init throws, no dictionary is created
+        // This test verifies the error contains correct information
+        do {
+            _ = try Dictionary<String, Int>.Ordered([
+                ("a", 1),
+                ("b", 2),
+                ("c", 3),
+                ("a", 10)  // Duplicate
+            ])
+            Issue.record("Expected error to be thrown")
+        } catch let error as Dictionary<String, Int>.Ordered.Error {
+            if case .duplicate(let info) = error {
+                #expect(info.key == "a")
+                #expect(info.first == 0)  // First occurrence at index 0
+            } else {
+                Issue.record("Expected duplicate error")
+            }
+        } catch {
+            Issue.record("Unexpected error type: \(error)")
+        }
+    }
+
+    // MARK: - Pathological Merge Orders
+
+    @Test("Merge with reversed order")
+    func mergeWithReversedOrder() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
+
+        // Merge reversed pairs
+        dict.merge.keep.last([("c", 30), ("b", 20), ("a", 10)])
+
+        // Order should be preserved, values updated
+        #expect(Array(dict.keys) == ["a", "b", "c"])
+        #expect(dict["a"] == 10)
+        #expect(dict["b"] == 20)
+        #expect(dict["c"] == 30)
+    }
+
+    @Test("Merge with interleaved keys")
+    func mergeWithInterleavedKeys() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["c"] = 3
+        dict["e"] = 5
+
+        // Merge interleaved keys
+        dict.merge.keep.first([("b", 2), ("d", 4), ("f", 6)])
+
+        // Original keys first, then new keys in merge order
+        #expect(Array(dict.keys) == ["a", "c", "e", "b", "d", "f"])
+    }
+}
