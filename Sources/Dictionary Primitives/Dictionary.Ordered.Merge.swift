@@ -15,6 +15,13 @@ public import Set_Primitives
 //
 // Merge operations require iterating over sequences of values, which requires
 // copying. For ~Copyable values, merge operations are not available.
+//
+// NOTE: Merge and Keep remain as concrete structs rather than using Property<Tag, Base>
+// because the nested accessor pattern (dict.merge.keep.first()) requires:
+// 1. `.keep` to be a property (not a method)
+// 2. Properties cannot introduce generic parameters
+// 3. If we extended Property_Primitives.Property, we'd lose access to Key/Value
+// See: "Protocol Conformance and Phantom Type Generalization" paper.
 
 extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
     /// Nested accessor for merge operations.
@@ -44,10 +51,10 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
     /// Available only when `Value` is `Copyable`.
     public struct Merge {
         @usableFromInline
-        var dict: Dictionary<Key, Value>.Ordered
+        var dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered
 
         @usableFromInline
-        init(dict: Dictionary<Key, Value>.Ordered) {
+        init(dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered) {
             self.dict = dict
         }
     }

@@ -32,10 +32,10 @@ extension Dictionary_Primitives.Dictionary.Ordered.Merge {
     /// Available only when `Value` is `Copyable`.
     public struct Keep {
         @usableFromInline
-        var dict: Dictionary<Key, Value>.Ordered
+        var dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered
 
         @usableFromInline
-        init(dict: Dictionary<Key, Value>.Ordered) {
+        init(dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered) {
             self.dict = dict
         }
     }
