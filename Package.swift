@@ -18,13 +18,19 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../swift-set-primitives")
+        .package(path: "../swift-set-primitives"),
+        .package(path: "../swift-index-primitives"),
+        .package(path: "../swift-collection-primitives"),
+        .package(path: "../swift-input-primitives"),
     ],
     targets: [
         .target(
             name: "Dictionary Primitives",
             dependencies: [
-                .product(name: "Set Primitives", package: "swift-set-primitives")
+                .product(name: "Set Primitives", package: "swift-set-primitives"),
+                .product(name: "Index Primitives", package: "swift-index-primitives"),
+                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
         .testTarget(
