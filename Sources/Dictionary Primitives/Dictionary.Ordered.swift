@@ -335,6 +335,13 @@ public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _count: Int
 
+            /// Workaround for Swift compiler bug where deinit element cleanup
+            /// fails for ~Copyable structs that contain only value-type properties.
+            /// Adding a reference type property (`AnyObject?`) fixes the bug.
+            /// See: https://github.com/swiftlang/swift/issues/86652
+            @usableFromInline
+            var _deinitWorkaround: AnyObject? = nil
+
             /// Creates an empty inline ordered dictionary.
             @inlinable
             public init() {
