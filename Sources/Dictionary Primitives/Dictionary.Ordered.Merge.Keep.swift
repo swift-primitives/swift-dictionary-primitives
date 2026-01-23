@@ -68,7 +68,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Merge.Keep {
     /// - Parameter pairs: The key-value pairs to merge.
     /// - Complexity: O(n) where n is the length of pairs.
     @inlinable
-    public mutating func first(_ pairs: some Sequence<(Key, Value)>) {
+    public mutating func first(_ pairs: some Swift.Sequence<(Key, Value)>) {
         for (key, value) in pairs {
             if !dict.contains(key) {
                 dict.set(key, value)
@@ -100,7 +100,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Merge.Keep {
     /// - Parameter pairs: The key-value pairs to merge.
     /// - Complexity: O(n) where n is the length of pairs.
     @inlinable
-    public mutating func last(_ pairs: some Sequence<(Key, Value)>) {
+    public mutating func last(_ pairs: some Swift.Sequence<(Key, Value)>) {
         for (key, value) in pairs {
             if dict.contains(key) {
                 // Update value without changing position

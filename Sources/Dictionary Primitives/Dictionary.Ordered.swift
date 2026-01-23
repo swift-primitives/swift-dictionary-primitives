@@ -667,7 +667,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
     /// - Parameter pairs: The key-value pairs.
     /// - Throws: `Ordered.Error.duplicate` if duplicate keys are found.
     @inlinable
-    public init(_ pairs: some Sequence<(Key, Value)>) throws(Error) {
+    public init(_ pairs: some Swift.Sequence<(Key, Value)>) throws(Error) {
         self.init()
         for (key, value) in pairs {
             let (inserted, _) = _keys.insert(key)
@@ -688,7 +688,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
     ///   - combine: A closure that receives the existing and new values, returning the value to keep.
     @inlinable
     public init(
-        _ pairs: some Sequence<(Key, Value)>,
+        _ pairs: some Swift.Sequence<(Key, Value)>,
         uniquingKeysWith combine: (Value, Value) throws -> Value
     ) rethrows {
         self.init()
