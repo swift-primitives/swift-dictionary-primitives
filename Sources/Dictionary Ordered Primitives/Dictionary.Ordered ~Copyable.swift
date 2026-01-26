@@ -17,17 +17,17 @@ public import Dictionary_Primitives_Core
 // alongside the type definitions. This is required for proper witness table generation.
 //
 // This module provides drain functionality to support ~Copyable values via Entry struct.
-// Uses a dedicated DrainView type (similar to Array primitives pattern) because
+// Uses a dedicated Drain type (similar to Array primitives pattern) because
 // Dictionary has two generic parameters (Key, Value) which complicates Property.View.Typed usage.
 
-// MARK: - Drain View Type
+// MARK: - Drain Type
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
-    /// View type for drain operations on Dictionary.Ordered.
+    /// Type for drain operations on Dictionary.Ordered.
     ///
     /// This type enables the `.drain { }` syntax while supporting `~Copyable` values.
     @safe
-    public struct DrainView: ~Copyable, ~Escapable {
+    public struct Drain: ~Copyable, ~Escapable {
         @usableFromInline
         internal let _base: UnsafeMutablePointer<Dictionary<Key, Value>.Ordered>
 
@@ -81,12 +81,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// ```
     ///
     /// - Complexity: O(n) where n is the number of elements.
-    public var drain: DrainView {
+    public var drain: Drain {
         mutating _read {
-            yield unsafe DrainView(&self)
+            yield unsafe Drain(&self)
         }
         mutating _modify {
-            var view = unsafe DrainView(&self)
+            var view = unsafe Drain(&self)
             yield &view
         }
     }
