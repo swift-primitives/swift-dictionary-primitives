@@ -36,23 +36,31 @@ let package = Package(
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
             ]
         ),
-        // Internal: Swift.Sequence.Protocol conformances (supports ~Copyable)
-        // Separate module to avoid constraint poisoning on Core types
+        // Variant: Swift.Sequence/Collection for Dictionary.Ordered (Value: Copyable)
         .target(
-            name: "Dictionary Primitives Sequence",
+            name: "Dictionary Ordered Primitives",
             dependencies: [
                 "Dictionary Primitives Core",
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
-        // Public: Re-exports Core and Sequence for users
+        // Variant: Swift.Sequence/Collection for Dictionary.Ordered.Bounded (Value: Copyable)
+        .target(
+            name: "Dictionary Bounded Primitives",
+            dependencies: [
+                "Dictionary Primitives Core",
+                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+            ]
+        ),
+        // Public: Re-exports Core, Variants, and Sequence for users
         .target(
             name: "Dictionary Primitives",
             dependencies: [
                 "Dictionary Primitives Core",
-                "Dictionary Primitives Sequence",
+                "Dictionary Ordered Primitives",
+                "Dictionary Bounded Primitives",
             ]
         ),
         .testTarget(
