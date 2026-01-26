@@ -10,53 +10,83 @@
 // ===----------------------------------------------------------------------===//
 
 public import Dictionary_Primitives_Core
-public import Sequence_Primitives
-public import Property_Primitives
 
 // MARK: - Note on Swift.Collection Conformances
 //
 // Swift.Sequence/Collection conformances are defined in Dictionary Primitives Core
 // alongside the type definitions. This is required for proper witness table generation.
 //
-// This module provides Sequence_Primitives protocol conformances that support
-// ~Copyable elements.
+// This module provides drain functionality to support ~Copyable values via Entry struct.
+// Uses a dedicated DrainView type (similar to Array primitives pattern) because
+// Dictionary has two generic parameters (Key, Value) which complicates Property.View.Typed usage.
 
-// MARK: - Sequence.Drain.Protocol Conformance
+// MARK: - Drain View Type
 
-/// Conformance wrapper for drain protocol.
-///
-/// The drain method is defined in Dictionary Primitives Core.
-/// This extension declares conformance to `Sequence.Drain.Protocol`.
-extension Dictionary_Primitives_Core.Dictionary.Ordered: Sequence.Drain.`Protocol` {
-    // Element type is Dictionary.Ordered.Element (defined in Core)
-    // drain(_ body:) method is defined in Dictionary.Ordered.swift
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
+    /// View type for drain operations on Dictionary.Ordered.
+    ///
+    /// This type enables the `.drain { }` syntax while supporting `~Copyable` values.
+    @safe
+    public struct DrainView: ~Copyable, ~Escapable {
+        @usableFromInline
+        internal let _base: UnsafeMutablePointer<Dictionary<Key, Value>.Ordered>
+
+        @inlinable
+        @_lifetime(borrow base)
+        internal init(_ base: UnsafeMutablePointer<Dictionary<Key, Value>.Ordered>) {
+            unsafe _base = base
+        }
+
+        /// Drain iteration: `.drain { }`
+        ///
+        /// Removes all key-value pairs from the dictionary, passing each to the closure
+        /// as an `Entry` with ownership. After this call, the dictionary is empty but usable.
+        /// Works for ALL value types including `~Copyable`.
+        ///
+        /// - Parameter body: A closure called with each entry (consuming).
+        @_lifetime(&self)
+        @inlinable
+        public mutating func callAsFunction(_ body: (consuming Entry) -> Void) {
+            let count = unsafe _base.pointee._valueStorage.header
+            guard count > 0 else { return }
+            _ = unsafe _base.pointee._valueStorage.withUnsafeMutablePointerToElements { elements in
+                for i in 0..<count {
+                    body(Entry(key: unsafe _base.pointee._keys[i], value: unsafe (elements + i).move()))
+                }
+            }
+            unsafe _base.pointee._valueStorage.header = 0
+            unsafe _base.pointee._keys.clear(keepingCapacity: true)
+        }
+    }
 }
 
-// MARK: - Property Accessor for drain
+// MARK: - Drain Property Accessor
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Property accessor for `.drain { }` syntax.
     ///
-    /// Draining removes all key-value pairs from the dictionary, passing each to the closure.
-    /// The dictionary survives but is empty after draining.
+    /// Draining removes all key-value pairs from the dictionary, passing each to the closure
+    /// as an `Entry`. The dictionary survives but is empty after draining.
+    ///
+    /// Works for ALL value types including `~Copyable`.
     ///
     /// ```swift
     /// var dict = Dictionary<String, Int>.Ordered()
-    /// dict["a"] = 1
-    /// dict["b"] = 2
-    /// dict.drain { key, value in print("\(key): \(value)") }
+    /// dict.set("a", 1)
+    /// dict.set("b", 2)
+    /// dict.drain { entry in print("\(entry.key): \(entry.value)") }
     /// // prints "a: 1" and "b: 2"
     /// // dict is now empty but still usable
-    /// dict["c"] = 3  // OK
+    /// dict.set("c", 3)  // OK
     /// ```
     ///
     /// - Complexity: O(n) where n is the number of elements.
-    public var drain: Property<Sequence.Drain, Self>.View {
+    public var drain: DrainView {
         mutating _read {
-            yield unsafe Property<Sequence.Drain, Self>.View(&self)
+            yield unsafe DrainView(&self)
         }
         mutating _modify {
-            var view = unsafe Property<Sequence.Drain, Self>.View(&self)
+            var view = unsafe DrainView(&self)
             yield &view
         }
     }
