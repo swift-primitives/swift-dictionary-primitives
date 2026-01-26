@@ -13,7 +13,7 @@ public import Set_Primitives
 
 // MARK: - Keys Accessor
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Nested accessor for key operations.
     ///
     /// ```swift
@@ -28,7 +28,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Keys Type
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Namespace for key operations.
     ///
     /// Keys are always `Copyable` since `Key: Hashable` implies `Copyable`.
@@ -45,7 +45,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Keys Operations
 
-extension Dictionary_Primitives.Dictionary.Ordered.Keys where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys where Value: ~Copyable {
     /// Returns the index of the given key, or `nil` if not present.
     ///
     /// - Parameter key: The key to find.
@@ -92,7 +92,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Keys where Value: ~Copyable {
 
 // MARK: - Sequence Conformance
 
-extension Dictionary_Primitives.Dictionary.Ordered.Keys: Sequence {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys: Swift.Sequence {
     public struct Iterator: IteratorProtocol {
         @usableFromInline
         var base: Set<Key>.Ordered.Iterator
@@ -114,4 +114,4 @@ extension Dictionary_Primitives.Dictionary.Ordered.Keys: Sequence {
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Keys.Iterator: Sendable where Key: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys.Iterator: Sendable where Key: Sendable {}

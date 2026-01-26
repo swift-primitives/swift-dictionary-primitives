@@ -22,15 +22,37 @@ let package = Package(
         .package(path: "../swift-index-primitives"),
         .package(path: "../swift-collection-primitives"),
         .package(path: "../swift-input-primitives"),
+        .package(path: "../swift-sequence-primitives"),
+        .package(path: "../swift-property-primitives"),
     ],
     targets: [
+        // Internal: Core types with ~Copyable support (no Sequence/Collection conformances)
         .target(
-            name: "Dictionary Primitives",
+            name: "Dictionary Primitives Core",
             dependencies: [
                 .product(name: "Set Primitives", package: "swift-set-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
+            ]
+        ),
+        // Internal: Swift.Sequence.Protocol conformances (supports ~Copyable)
+        // Separate module to avoid constraint poisoning on Core types
+        .target(
+            name: "Dictionary Primitives Sequence",
+            dependencies: [
+                "Dictionary Primitives Core",
+                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
+                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Property Primitives", package: "swift-property-primitives"),
+            ]
+        ),
+        // Public: Re-exports Core and Sequence for users
+        .target(
+            name: "Dictionary Primitives",
+            dependencies: [
+                "Dictionary Primitives Core",
+                "Dictionary Primitives Sequence",
             ]
         ),
         .testTarget(

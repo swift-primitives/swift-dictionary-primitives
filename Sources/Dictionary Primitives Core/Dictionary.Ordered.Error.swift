@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Set_Primitives
+
 // MARK: - Hoisted Error Types (Module Level)
 //
 // Swift does not allow nested types inside generic types to be easily accessed.
@@ -21,7 +23,7 @@
 /// Hoisted implementation of ``Dictionary/Ordered/Error``.
 ///
 /// - Note: Use ``Dictionary/Ordered/Error`` in your code, not this type directly.
-public enum __DictionaryOrderedError<Key: Hashable>: Swift.Error {
+public enum __DictionaryOrderedError<Key: Hash.`Protocol`>: Swift.Error {
     /// An index was out of bounds.
     case bounds(Bounds)
 
@@ -72,7 +74,7 @@ public enum __DictionaryOrderedError<Key: Hashable>: Swift.Error {
 /// Hoisted implementation of ``Dictionary/Ordered/Bounded/Error``.
 ///
 /// - Note: Use ``Dictionary/Ordered/Bounded/Error`` in your code, not this type directly.
-public enum __DictionaryOrderedBoundedError<Key: Hashable>: Swift.Error {
+public enum __DictionaryOrderedBoundedError<Key: Hash.`Protocol`>: Swift.Error {
     /// An index was out of bounds.
     case bounds(index: Int, count: Int)
 
@@ -92,7 +94,7 @@ public enum __DictionaryOrderedBoundedError<Key: Hashable>: Swift.Error {
 /// Hoisted implementation of ``Dictionary/Ordered/Inline/Error``.
 ///
 /// - Note: Use ``Dictionary/Ordered/Inline/Error`` in your code, not this type directly.
-public enum __DictionaryOrderedInlineError<Key: Hashable>: Swift.Error {
+public enum __DictionaryOrderedInlineError<Key: Hash.`Protocol`>: Swift.Error {
     /// The dictionary is full and cannot accept more pairs.
     case overflow
 
@@ -149,7 +151,7 @@ extension __DictionaryOrderedInlineError: CustomStringConvertible {
 
 // MARK: - Typealiases (Nest.Name API)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Errors that can occur during ordered dictionary operations.
     ///
     /// ## Cases

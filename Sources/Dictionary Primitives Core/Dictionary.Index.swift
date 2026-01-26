@@ -55,7 +55,7 @@ extension Dictionary.Ordered where Value: Copyable {
     @inlinable
     public func value(at index: Dictionary<Key, Value>.Index) -> Value {
         precondition(index.position.rawValue >= 0 && index.position.rawValue < count, "Index out of bounds")
-        return _cachedValuePtr[index.position.rawValue]
+        return unsafe _cachedValuePtr[index.position.rawValue]
     }
 
     /// Returns the key-value pair at the typed index, or nil if out of bounds.
@@ -66,6 +66,6 @@ extension Dictionary.Ordered where Value: Copyable {
     public func entry(at index: Dictionary<Key, Value>.Index) -> (key: Key, value: Value)? {
         guard index.position.rawValue >= 0 && index.position.rawValue < count else { return nil }
         let key = _keys[index.position.rawValue]
-        return (key, _cachedValuePtr[index.position.rawValue])
+        return unsafe (key, _cachedValuePtr[index.position.rawValue])
     }
 }

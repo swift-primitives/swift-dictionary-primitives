@@ -13,7 +13,7 @@ public import Set_Primitives
 
 // MARK: - Keep Type (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered.Merge {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Merge {
     /// Namespace for keep-policy merge operations.
     ///
     /// Keep-policy merges resolve key conflicts by retaining either the existing
@@ -32,10 +32,10 @@ extension Dictionary_Primitives.Dictionary.Ordered.Merge {
     /// Available only when `Value` is `Copyable`.
     public struct Keep {
         @usableFromInline
-        var dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered
+        var dict: Dictionary_Primitives_Core.Dictionary<Key, Value>.Ordered
 
         @usableFromInline
-        init(dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered) {
+        init(dict: Dictionary_Primitives_Core.Dictionary<Key, Value>.Ordered) {
             self.dict = dict
         }
     }
@@ -43,7 +43,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Merge {
 
 // MARK: - Keep Operations (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered.Merge.Keep {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Merge.Keep {
     /// Merges pairs, keeping the first (existing) value for duplicate keys.
     ///
     /// ## Algebraic Law

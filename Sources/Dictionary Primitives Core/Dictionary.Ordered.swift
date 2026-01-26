@@ -50,7 +50,7 @@ public import Set_Primitives
 //
 // ## Copyable Boundaries
 //
-// - Keys are always Copyable (Hashable implies Copyable)
+// - Keys must conform to Hash.Protocol (supports ~Copyable keys)
 // - Values may be ~Copyable (move-only)
 // - Copy-on-Write only applies when Value: Copyable
 // - Base methods use `consuming Value`; CoW methods use `Value`
@@ -60,8 +60,8 @@ public import Set_Primitives
 /// Namespace for ordered dictionary types.
 ///
 /// This shadows `Swift.Dictionary`. Use `Swift.Dictionary` or module-qualified
-/// `Dictionary_Primitives.Dictionary` to disambiguate when both are in scope.
-public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
+/// `Dictionary_Primitives_Core.Dictionary` to disambiguate when both are in scope.
+public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
     /// An ordered dictionary that preserves insertion order, supporting move-only values.
     ///
     /// `Ordered` combines the key-value semantics of a dictionary with the ordering
@@ -131,14 +131,34 @@ public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
     @safe
     public struct Ordered: ~Copyable {
 
+        // MARK: - Element (nested to inherit Value's ~Copyable context)
+
+        /// A key-value pair element from the dictionary.
+        ///
+        /// This struct supports ~Copyable values, unlike tuples which require Copyable elements.
+        /// Used as the `Element` type for `Sequence.Drain.Protocol` conformance.
+        public struct Element: ~Copyable {
+            /// The key of this element.
+            public let key: Key
+
+            /// The value of this element.
+            public var value: Value
+
+            /// Creates an element with the given key and value.
+            @inlinable
+            public init(key: Key, value: consuming Value) {
+                self.key = key
+                self.value = value
+            }
+        }
+
         // MARK: - ValueStorage (nested to inherit Value's ~Copyable context)
 
         /// Internal storage class for values using ManagedBuffer.
         ///
         /// Declared as a nested class inside `Ordered` so that the `Value` generic
         /// inherits the `~Copyable` suppression from the outer type.
-        @usableFromInline
-        final class ValueStorage: ManagedBuffer<Int, Value> {
+        public final class ValueStorage: ManagedBuffer<Int, Value> {
 
             /// Creates empty storage with the specified minimum capacity.
             @usableFromInline
@@ -223,16 +243,13 @@ public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
             }
         }
 
-        @usableFromInline
-        var _keys: Set<Key>.Ordered
+        public var _keys: Set<Key>.Ordered
 
-        @usableFromInline
-        var _valueStorage: ValueStorage
+        public var _valueStorage: ValueStorage
 
         /// Cached pointer to value storage. Stored in struct to enable property-based access.
         /// CRITICAL: Must be updated whenever _valueStorage is replaced (reallocation, CoW copy).
-        @usableFromInline
-        var _cachedValuePtr: UnsafeMutablePointer<Value>
+        public var _cachedValuePtr: UnsafeMutablePointer<Value>
 
         /// Creates an empty ordered dictionary.
         @inlinable
@@ -271,15 +288,12 @@ public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
         /// ```
         @safe
         public struct Bounded: ~Copyable {
-            @usableFromInline
-            var _keys: Set<Key>.Ordered
+            public var _keys: Set<Key>.Ordered
 
-            @usableFromInline
-            var _valueStorage: ValueStorage
+            public var _valueStorage: ValueStorage
 
             /// Cached pointer to value storage.
-            @usableFromInline
-            var _cachedValuePtr: UnsafeMutablePointer<Value>
+            public var _cachedValuePtr: UnsafeMutablePointer<Value>
 
             /// The maximum number of key-value pairs the dictionary can hold.
             public let capacity: Int
@@ -289,7 +303,7 @@ public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
             /// - Parameter capacity: Maximum number of pairs. Must be non-negative.
             /// - Throws: ``Dictionary/Ordered/Bounded/Error/invalidCapacity`` if capacity is negative.
             @inlinable
-            public init(capacity: Int) throws(__DictionaryOrderedBoundedError<Key>) {
+            public init(capacity: Int) throws(Dictionary.Ordered.Bounded.Error) {
                 guard capacity >= 0 else {
                     throw .invalidCapacity
                 }
@@ -583,16 +597,16 @@ public enum Dictionary<Key: Hashable, Value: ~Copyable>: ~Copyable {
 ///
 /// This enables value semantics with copy-on-write optimization:
 /// copies share storage until mutation.
-extension Dictionary_Primitives.Dictionary.Ordered: Copyable where Value: Copyable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Copyable where Value: Copyable {}
 
 /// `Dictionary.Ordered.Bounded` is `Copyable` when its values are `Copyable`.
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded: Copyable where Value: Copyable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Copyable where Value: Copyable {}
 
 // Note: Dictionary.Ordered.Small and Dictionary.Ordered.Inline are UNCONDITIONALLY ~Copyable due to deinit requirement
 
 // MARK: - ValueStorage Copyable Helpers
 
-extension Dictionary_Primitives.Dictionary.Ordered.ValueStorage where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.ValueStorage where Value: Copyable {
 
     /// Creates a copy of this storage with all values duplicated.
     @usableFromInline
@@ -617,8 +631,8 @@ extension Dictionary_Primitives.Dictionary.Ordered.ValueStorage where Value: Cop
     }
 
     /// Reads value at the given index.
-    @usableFromInline
-    func _readValue(at index: Int) -> Value {
+    @inlinable
+    public func _readValue(at index: Int) -> Value {
         unsafe withUnsafeMutablePointerToElements { elements in
             unsafe elements[index]
         }
@@ -641,7 +655,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.ValueStorage where Value: Cop
 
 // MARK: - Initialization
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Creates an ordered dictionary with reserved capacity.
     ///
     /// Pre-allocates storage for the specified number of elements.
@@ -661,7 +675,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Creates an ordered dictionary from key-value pairs.
     ///
     /// - Parameter pairs: The key-value pairs.
@@ -711,7 +725,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Properties
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// The number of key-value pairs.
     @inlinable
     public var count: Int {
@@ -733,7 +747,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Contains
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Returns whether the dictionary contains the given key.
     ///
     /// - Parameter key: The key to check.
@@ -746,7 +760,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Capacity Management
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Ensures the dictionary has capacity for at least the specified number of elements.
     @usableFromInline
     mutating func ensureCapacity(_ minimumCapacity: Int) {
@@ -775,7 +789,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Core Operations (Base - for ~Copyable values)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Sets the value for the given key.
     ///
     /// - Parameters:
@@ -827,7 +841,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Copy-on-Write (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     mutating func makeUnique() {
@@ -895,7 +909,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Subscript Access (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Accesses the value for the given key.
     ///
     /// - Parameter key: The key to look up.
@@ -928,7 +942,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Peek (for ~Copyable values)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Accesses the value for the given key via closure (for ~Copyable values).
     ///
     /// - Parameters:
@@ -961,7 +975,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - forEach (for ~Copyable values)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Calls the given closure for each key-value pair in the dictionary.
     ///
     /// Elements are visited in insertion order.
@@ -978,18 +992,38 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: ~Copyable {
             }
         }
     }
+
+    /// Drains all key-value pairs from the dictionary, passing each to the closure.
+    ///
+    /// After this method returns, the dictionary is empty but still usable.
+    /// Elements are visited in insertion order. Values are moved out (consumed).
+    ///
+    /// - Parameter body: A closure that receives each element with ownership.
+    /// - Complexity: O(n) where n is the number of elements.
+    @inlinable
+    public mutating func drain(_ body: (consuming Element) -> Void) {
+        let count = _valueStorage.header
+        guard count > 0 else { return }
+        _ = unsafe _valueStorage.withUnsafeMutablePointerToElements { elements in
+            for i in 0..<count {
+                body(Element(key: _keys[i], value: unsafe (elements + i).move()))
+            }
+        }
+        _valueStorage.header = 0
+        _keys.clear(keepingCapacity: true)
+    }
 }
 
 // MARK: - Sendable
 
-extension Dictionary_Primitives.Dictionary.Ordered: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives.Dictionary.Ordered.Inline: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives.Dictionary.Ordered.Small: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Small: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 
 // MARK: - Equatable (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered: Equatable where Value: Equatable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Equatable where Value: Equatable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs._keys == rhs._keys else { return false }
@@ -1005,7 +1039,7 @@ extension Dictionary_Primitives.Dictionary.Ordered: Equatable where Value: Equat
 
 // MARK: - Hashable (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered: Hashable where Value: Hashable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Hashable where Key: Hashable, Value: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
         hasher.combine(count)
@@ -1018,7 +1052,7 @@ extension Dictionary_Primitives.Dictionary.Ordered: Hashable where Value: Hashab
 
 // MARK: - CustomStringConvertible
 
-extension Dictionary_Primitives.Dictionary.Ordered: CustomStringConvertible where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered: CustomStringConvertible where Value: Copyable {
     public var description: String {
         var result = "Dictionary.Ordered(["
         var first = true
@@ -1034,7 +1068,7 @@ extension Dictionary_Primitives.Dictionary.Ordered: CustomStringConvertible wher
 
 // MARK: - Bounded Variant Extensions
 
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Copyable {
     /// Errors that can occur during bounded ordered dictionary operations.
     public typealias Error = __DictionaryOrderedBoundedError<Key>
 
@@ -1101,7 +1135,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Bounded where Value: ~Copyabl
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Copyable {
     /// Accesses the value for the given key.
     @inlinable
     public subscript(key: Key) -> Value? {
@@ -1119,7 +1153,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Bounded where Value: Copyable
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Copyable {
     /// Accesses the value for the given key via closure (for ~Copyable values).
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
@@ -1139,7 +1173,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Bounded where Value: ~Copyabl
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded: Equatable where Value: Equatable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Equatable where Value: Equatable {
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs._keys == rhs._keys else { return false }
@@ -1153,7 +1187,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Bounded: Equatable where Valu
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Bounded: Hashable where Value: Hashable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Hashable where Key: Hashable, Value: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
         hasher.combine(count)
@@ -1166,7 +1200,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Bounded: Hashable where Value
 
 // MARK: - Inline Variant Extensions
 
-extension Dictionary_Primitives.Dictionary.Ordered.Inline where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Copyable {
     /// Errors that can occur during inline ordered dictionary operations.
     public typealias Error = __DictionaryOrderedInlineError<Key>
 
@@ -1263,7 +1297,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Inline where Value: ~Copyable
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Inline where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: Copyable {
     /// Accesses the value for the given key.
     @inlinable
     public subscript(key: Key) -> Value? {
@@ -1281,7 +1315,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Inline where Value: Copyable 
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Inline where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Copyable {
     /// Accesses the value for the given key via closure (for ~Copyable values).
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
@@ -1302,7 +1336,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Inline where Value: ~Copyable
 
 // MARK: - Small Variant Extensions
 
-extension Dictionary_Primitives.Dictionary.Ordered.Small where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copyable {
     /// The number of key-value pairs.
     @inlinable
     public var count: Int { _count }
@@ -1435,7 +1469,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Small where Value: ~Copyable 
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Small where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copyable {
     /// Accesses the value for the given key.
     @inlinable
     public subscript(key: Key) -> Value? {
@@ -1460,7 +1494,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Small where Value: Copyable {
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Small where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copyable {
     /// Accesses the value for the given key via closure (for ~Copyable values).
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
@@ -1489,3 +1523,147 @@ extension Dictionary_Primitives.Dictionary.Ordered.Small where Value: ~Copyable 
 
 // Note: Small is unconditionally ~Copyable (has deinit), cannot conform to Equatable/Hashable
 // which require Copyable. Use isEqual(to:) method instead if needed.
+
+// MARK: - Sequence (Copyable values only)
+//
+// Sequence and Collection conformances are only available when Value is Copyable
+// because iteration requires copying elements. For ~Copyable values, use forEach(_:).
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.Sequence where Value: Copyable {
+    public struct Iterator: IteratorProtocol {
+        @usableFromInline
+        var index: Int
+
+        @usableFromInline
+        let keys: Set<Key>.Ordered
+
+        @usableFromInline
+        let valueStorage: ValueStorage
+
+        @usableFromInline
+        let count: Int
+
+        @usableFromInline
+        init(keys: Set<Key>.Ordered, valueStorage: ValueStorage) {
+            self.index = 0
+            self.keys = keys
+            self.valueStorage = valueStorage
+            self.count = valueStorage.header
+        }
+
+        @inlinable
+        public mutating func next() -> Element? {
+            guard index < count else { return nil }
+            let key = keys[index]
+            let value = valueStorage._readValue(at: index)
+            index += 1
+            return Element(key: key, value: value)
+        }
+    }
+
+    @inlinable
+    public func makeIterator() -> Iterator {
+        Iterator(keys: _keys, valueStorage: _valueStorage)
+    }
+}
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Iterator: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+
+// MARK: - Collection (Copyable values only)
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.Collection where Value: Copyable {
+    public typealias Index = Int
+    // Element is Dictionary.Ordered.Element struct (defined above)
+
+    @inlinable
+    public var startIndex: Index { 0 }
+
+    @inlinable
+    public var endIndex: Index { count }
+
+    @inlinable
+    public func index(after i: Index) -> Index {
+        i + 1
+    }
+
+    @inlinable
+    public subscript(position: Index) -> Element {
+        precondition(position >= 0 && position < count, "Index out of bounds")
+        return Element(key: _keys[position], value: _valueStorage._readValue(at: position))
+    }
+}
+
+// MARK: - BidirectionalCollection (Copyable values only)
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.BidirectionalCollection where Value: Copyable {
+    @inlinable
+    public func index(before i: Index) -> Index {
+        i - 1
+    }
+}
+
+// MARK: - RandomAccessCollection (Copyable values only)
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.RandomAccessCollection where Value: Copyable {
+    @inlinable
+    public func distance(from start: Index, to end: Index) -> Int {
+        end - start
+    }
+
+    @inlinable
+    public func index(_ i: Index, offsetBy distance: Int) -> Index {
+        i + distance
+    }
+
+    @inlinable
+    public func index(_ i: Index, offsetBy distance: Int, limitedBy limit: Index) -> Index? {
+        let result = i + distance
+        if distance >= 0 {
+            return result <= limit ? result : nil
+        } else {
+            return result >= limit ? result : nil
+        }
+    }
+}
+
+// MARK: - Bounded Sequence (Copyable values only)
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Swift.Sequence where Value: Copyable {
+    public struct Iterator: IteratorProtocol {
+        @usableFromInline
+        var index: Int
+
+        @usableFromInline
+        let keys: Set<Key>.Ordered
+
+        @usableFromInline
+        let valueStorage: Dictionary<Key, Value>.Ordered.ValueStorage
+
+        @usableFromInline
+        let count: Int
+
+        @usableFromInline
+        init(keys: Set<Key>.Ordered, valueStorage: Dictionary<Key, Value>.Ordered.ValueStorage) {
+            self.index = 0
+            self.keys = keys
+            self.valueStorage = valueStorage
+            self.count = valueStorage.header
+        }
+
+        @inlinable
+        public mutating func next() -> Dictionary<Key, Value>.Ordered.Element? {
+            guard index < count else { return nil }
+            let key = keys[index]
+            let value = valueStorage._readValue(at: index)
+            index += 1
+            return Dictionary<Key, Value>.Ordered.Element(key: key, value: value)
+        }
+    }
+
+    @inlinable
+    public func makeIterator() -> Iterator {
+        Iterator(keys: _keys, valueStorage: _valueStorage)
+    }
+}
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded.Iterator: @unchecked Sendable where Key: Sendable, Value: Sendable {}

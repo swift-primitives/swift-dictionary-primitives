@@ -17,7 +17,7 @@ public import Set_Primitives
 // when values are Copyable. For ~Copyable values, use the methods directly
 // on Dictionary.Ordered: set(_:_:), remove(_:), withValue(forKey:_:), etc.
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Nested accessor for value operations.
     ///
     /// ```swift
@@ -41,7 +41,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Values Type (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Namespace for value operations.
     ///
     /// Available only when `Value` is `Copyable`. For `~Copyable` values,
@@ -59,7 +59,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Values Operations (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered.Values {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     /// Sets the value for the given key.
     ///
     /// If the key exists, updates the value without changing position.
@@ -152,7 +152,7 @@ extension Dictionary_Primitives.Dictionary.Ordered.Values {
 
 // MARK: - Sequence Conformance (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered.Values: Sequence {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
     public struct Iterator: IteratorProtocol {
         @usableFromInline
         let storage: Dictionary<Key, Value>.Ordered.ValueStorage
@@ -185,4 +185,4 @@ extension Dictionary_Primitives.Dictionary.Ordered.Values: Sequence {
     }
 }
 
-extension Dictionary_Primitives.Dictionary.Ordered.Values.Iterator: @unchecked Sendable where Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Values.Iterator: @unchecked Sendable where Value: Sendable {}

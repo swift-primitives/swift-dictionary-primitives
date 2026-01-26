@@ -23,7 +23,7 @@ public import Set_Primitives
 // 3. If we extended Property_Primitives.Property, we'd lose access to Key/Value
 // See: "Protocol Conformance and Phantom Type Generalization" paper.
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Nested accessor for merge operations.
     ///
     /// ```swift
@@ -45,16 +45,16 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Merge Type (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Namespace for merge operations.
     ///
     /// Available only when `Value` is `Copyable`.
     public struct Merge {
         @usableFromInline
-        var dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered
+        var dict: Dictionary_Primitives_Core.Dictionary<Key, Value>.Ordered
 
         @usableFromInline
-        init(dict: Dictionary_Primitives.Dictionary<Key, Value>.Ordered) {
+        init(dict: Dictionary_Primitives_Core.Dictionary<Key, Value>.Ordered) {
             self.dict = dict
         }
     }
@@ -62,7 +62,7 @@ extension Dictionary_Primitives.Dictionary.Ordered where Value: Copyable {
 
 // MARK: - Merge Keep Accessor (Copyable values only)
 
-extension Dictionary_Primitives.Dictionary.Ordered.Merge {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Merge {
     /// Nested accessor for keep-policy merge operations.
     @inlinable
     public var keep: Keep {
