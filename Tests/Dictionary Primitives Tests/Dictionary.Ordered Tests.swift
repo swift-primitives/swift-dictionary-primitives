@@ -1,8 +1,8 @@
 // ===----------------------------------------------------------------------===//
 //
-// This source file is part of the swift-standards open source project
+// This source file is part of the swift-primitives open source project
 //
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-standards project authors
+// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-primitives project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -12,13 +12,25 @@
 import Testing
 @testable import Dictionary_Primitives
 
+// MARK: - Dictionary.Ordered Tests
+//
+// [TEST-004] Generic type specializations use parallel namespace pattern due to
+// Swift Testing discovery limitation. See swiftlang/swift-testing#1508.
+
 @Suite("Dictionary.Ordered")
-struct OrderedDictionaryTests {
+struct DictionaryOrderedTests {
+    @Suite struct Unit {}
+    @Suite struct EdgeCase {}
+    @Suite struct Integration {}
+    @Suite(.serialized) struct Performance {}
+}
 
-    // MARK: - Basic Operations
+// MARK: - Unit Tests
 
-    @Test("Set and get values")
-    func setAndGetValues() {
+extension DictionaryOrderedTests.Unit {
+
+    @Test
+    func `Set and get values`() {
         var dict = Dictionary<String, Int>.Ordered()
 
         dict.values.set("apple", 1)
@@ -31,8 +43,8 @@ struct OrderedDictionaryTests {
         #expect(dict["durian"] == nil)
     }
 
-    @Test("Subscript set and get")
-    func subscriptSetAndGet() {
+    @Test
+    func `Subscript set and get`() {
         var dict = Dictionary<String, Int>.Ordered()
 
         dict["a"] = 1
@@ -51,8 +63,8 @@ struct OrderedDictionaryTests {
         #expect(dict.count == 1)
     }
 
-    @Test("Remove value")
-    func removeValue() {
+    @Test
+    func `Remove value`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -67,8 +79,8 @@ struct OrderedDictionaryTests {
         #expect(dict.keys.index("c") == 1)
     }
 
-    @Test("Keys index lookup")
-    func keysIndexLookup() {
+    @Test
+    func `Keys index lookup`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["first"] = 1
         dict["second"] = 2
@@ -80,10 +92,8 @@ struct OrderedDictionaryTests {
         #expect(dict.keys.index("fourth") == nil)
     }
 
-    // MARK: - Order Preservation
-
-    @Test("Insertion order preserved")
-    func insertionOrderPreserved() {
+    @Test
+    func `Insertion order preserved`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["charlie"] = 3
         dict["alpha"] = 1
@@ -93,8 +103,8 @@ struct OrderedDictionaryTests {
         #expect(keys == ["charlie", "alpha", "bravo"])
     }
 
-    @Test("Update does not change order")
-    func updateDoesNotChangeOrder() {
+    @Test
+    func `Update does not change order`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -108,24 +118,8 @@ struct OrderedDictionaryTests {
         #expect(dict["b"] == 20)
     }
 
-    @Test("Re-insertion goes to end")
-    func reinsertionGoesToEnd() {
-        var dict = Dictionary<String, Int>.Ordered()
-        dict["a"] = 1
-        dict["b"] = 2
-        dict["c"] = 3
-
-        dict.values.remove("b")
-        dict["b"] = 20
-
-        let keys = Array(dict.keys)
-        #expect(keys == ["a", "c", "b"])
-    }
-
-    // MARK: - Nested Accessors
-
-    @Test("Values modify")
-    func valuesModify() {
+    @Test
+    func `Values modify`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["counter"] = 0
 
@@ -135,8 +129,8 @@ struct OrderedDictionaryTests {
         #expect(dict["counter"] == 2)
     }
 
-    @Test("Merge keep first")
-    func mergeKeepFirst() {
+    @Test
+    func `Merge keep first`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -148,8 +142,8 @@ struct OrderedDictionaryTests {
         #expect(dict["c"] == 3)
     }
 
-    @Test("Merge keep last")
-    func mergeKeepLast() {
+    @Test
+    func `Merge keep last`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -165,10 +159,8 @@ struct OrderedDictionaryTests {
         #expect(keys == ["a", "b", "c"])
     }
 
-    // MARK: - Initialization
-
-    @Test("Init from pairs")
-    func initFromPairs() throws {
+    @Test
+    func `Init from pairs`() throws {
         let dict = try Dictionary<String, Int>.Ordered([
             ("a", 1),
             ("b", 2),
@@ -181,19 +173,8 @@ struct OrderedDictionaryTests {
         #expect(dict["c"] == 3)
     }
 
-    @Test("Init throws on duplicate")
-    func initThrowsOnDuplicate() {
-        #expect(throws: Dictionary<String, Int>.Ordered.Error.self) {
-            _ = try Dictionary<String, Int>.Ordered([
-                ("a", 1),
-                ("b", 2),
-                ("a", 3)  // Duplicate
-            ])
-        }
-    }
-
-    @Test("Init with uniquing closure")
-    func initWithUniquingClosure() {
+    @Test
+    func `Init with uniquing closure`() {
         let dict = Dictionary<String, Int>.Ordered(
             [("a", 1), ("b", 2), ("a", 10)],
             uniquingKeysWith: { $0 + $1 }
@@ -203,10 +184,8 @@ struct OrderedDictionaryTests {
         #expect(dict["b"] == 2)
     }
 
-    // MARK: - Collection Conformance
-
-    @Test("Index access")
-    func indexAccess() {
+    @Test
+    func `Index access`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -217,8 +196,8 @@ struct OrderedDictionaryTests {
         #expect(pair.value == 2)
     }
 
-    @Test("Iteration")
-    func iteration() {
+    @Test
+    func `Iteration`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["x"] = 10
         dict["y"] = 20
@@ -235,69 +214,14 @@ struct OrderedDictionaryTests {
         #expect(values == [10, 20, 30])
     }
 
-    // TODO: Investigate SIGSEGV crash with cross-module Swift.Sequence conformance
-    // See: https://github.com/apple/swift/issues/XXXXX (file a bug if confirmed)
-    @Test("Bidirectional iteration", .disabled("Crashes with cross-module BidirectionalCollection conformance"))
-    func bidirectionalIteration() {
-        var dict = Dictionary<String, Int>.Ordered()
-        dict["a"] = 1
-        dict["b"] = 2
-        dict["c"] = 3
-
-        let reversed = Array(dict.reversed())
-        #expect(reversed.map { $0.key } == ["c", "b", "a"])
-    }
-
-    // MARK: - Copy-on-Write
-    //
-    // Note: Identity-based CoW tests are not reliable for stdlib-backed storage.
-    // See Set.Ordered._identity documentation. Use functional tests instead.
-
-    @Test("CoW: mutation does not affect original")
-    func cowMutationDoesNotAffectOriginal() {
-        var original = Dictionary<String, Int>.Ordered()
-        original["a"] = 1
-        original["b"] = 2
-        original["c"] = 3
-
-        var copy = original
-        copy["d"] = 4
-        copy["a"] = nil
-
-        #expect(Array(original.keys) == ["a", "b", "c"])
-        #expect(Array(copy.keys) == ["b", "c", "d"])
-        #expect(original.count == 3)
-        #expect(copy.count == 3)
-    }
-
-    @Test("CoW: multiple copies are independent")
-    func cowMultipleCopiesIndependent() {
-        var original = Dictionary<String, Int>.Ordered()
-        original["a"] = 1
-        original["b"] = 2
-
-        var copy1 = original
-        var copy2 = original
-
-        copy1["c"] = 3
-        copy2["a"] = nil
-
-        #expect(Array(original.keys) == ["a", "b"])
-        #expect(Array(copy1.keys) == ["a", "b", "c"])
-        #expect(Array(copy2.keys) == ["b"])
-    }
-
-    // MARK: - Properties
-
-    @Test("Empty dictionary")
-    func emptyDictionary() {
+    @Test
+    func `Empty dictionary`() {
         let dict = Dictionary<String, Int>.Ordered()
-
         #expect(dict.isEmpty)
     }
 
-    @Test("Clear")
-    func clear() {
+    @Test
+    func `Clear`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -307,8 +231,8 @@ struct OrderedDictionaryTests {
         #expect(dict.isEmpty)
     }
 
-    @Test("Contains")
-    func contains() {
+    @Test
+    func `Contains`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["apple"] = 1
 
@@ -316,10 +240,8 @@ struct OrderedDictionaryTests {
         #expect(!dict.contains("banana"))
     }
 
-    // MARK: - Equatable
-
-    @Test("Equality")
-    func equality() {
+    @Test
+    func `Equality`() {
         var a = Dictionary<String, Int>.Ordered()
         a["x"] = 1
         a["y"] = 2
@@ -337,85 +259,47 @@ struct OrderedDictionaryTests {
     }
 }
 
-// MARK: - Invariant Stress Tests
+// MARK: - Edge Case Tests
 
-@Suite("Dictionary.Ordered - Invariant Stress Tests")
-struct OrderedDictionaryInvariantTests {
+extension DictionaryOrderedTests.EdgeCase {
 
-    // MARK: - Merge Idempotence
-
-    @Test("Merge keep first is idempotent")
-    func mergeKeepFirstIdempotent() {
-        var dict = Dictionary<String, Int>.Ordered()
-        dict["a"] = 1
-        dict["b"] = 2
-        dict["c"] = 3
-
-        let originalKeys = Array(dict.keys)
-        let originalValues = (0..<dict.count).map { dict[index: $0].value }
-
-        // Merge with self should be idempotent
-        dict.merge.keep.first(dict.map { ($0.key, $0.value) })
-
-        #expect(Array(dict.keys) == originalKeys)
-        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    @Test
+    func `Init throws on duplicate`() {
+        #expect(throws: Dictionary<String, Int>.Ordered.Error.self) {
+            _ = try Dictionary<String, Int>.Ordered([
+                ("a", 1),
+                ("b", 2),
+                ("a", 3)  // Duplicate
+            ])
+        }
     }
 
-    @Test("Merge keep last is idempotent")
-    func mergeKeepLastIdempotent() {
-        var dict = Dictionary<String, Int>.Ordered()
-        dict["a"] = 1
-        dict["b"] = 2
-        dict["c"] = 3
-
-        let originalKeys = Array(dict.keys)
-        let originalValues = (0..<dict.count).map { dict[index: $0].value }
-
-        // Merge with self should be idempotent
-        dict.merge.keep.last(dict.map { ($0.key, $0.value) })
-
-        #expect(Array(dict.keys) == originalKeys)
-        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    @Test
+    func `Init throws on duplicate preserves partial state correctly`() {
+        // When init throws, no dictionary is created
+        // This test verifies the error contains correct information
+        do {
+            _ = try Dictionary<String, Int>.Ordered([
+                ("a", 1),
+                ("b", 2),
+                ("c", 3),
+                ("a", 10)  // Duplicate
+            ])
+            Issue.record("Expected error to be thrown")
+        } catch let error as Dictionary<String, Int>.Ordered.Error {
+            if case .duplicate(let info) = error {
+                #expect(info.key == "a")
+                #expect(info.first == 0)  // First occurrence at index 0
+            } else {
+                Issue.record("Expected duplicate error")
+            }
+        } catch {
+            Issue.record("Unexpected error type: \(error)")
+        }
     }
 
-    // MARK: - Merge Identity
-
-    @Test("Merge keep first with empty is identity")
-    func mergeKeepFirstEmptyIdentity() {
-        var dict = Dictionary<String, Int>.Ordered()
-        dict["a"] = 1
-        dict["b"] = 2
-
-        let originalKeys = Array(dict.keys)
-        let originalValues = (0..<dict.count).map { dict[index: $0].value }
-
-        // Merge with empty should be identity
-        dict.merge.keep.first([])
-
-        #expect(Array(dict.keys) == originalKeys)
-        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
-    }
-
-    @Test("Merge keep last with empty is identity")
-    func mergeKeepLastEmptyIdentity() {
-        var dict = Dictionary<String, Int>.Ordered()
-        dict["a"] = 1
-        dict["b"] = 2
-
-        let originalKeys = Array(dict.keys)
-        let originalValues = (0..<dict.count).map { dict[index: $0].value }
-
-        // Merge with empty should be identity
-        dict.merge.keep.last([])
-
-        #expect(Array(dict.keys) == originalKeys)
-        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
-    }
-
-    // MARK: - Empty Dictionary Edge Cases
-
-    @Test("Empty dictionary operations")
-    func emptyDictionaryEdgeCases() {
+    @Test
+    func `Empty dictionary operations`() {
         var empty = Dictionary<String, Int>.Ordered()
 
         // Operations on empty dictionary
@@ -432,8 +316,8 @@ struct OrderedDictionaryInvariantTests {
         #expect(empty["a"] == 1)
     }
 
-    @Test("Empty merge into non-empty")
-    func emptyMergeIntoNonEmpty() {
+    @Test
+    func `Empty merge into non-empty`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -448,10 +332,103 @@ struct OrderedDictionaryInvariantTests {
         #expect(dict.count == 2)
     }
 
-    // MARK: - Key-Value Index Correspondence
+    @Test
+    func `Nil assignment removes key`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
 
-    @Test("Key-value index correspondence after operations")
-    func keyValueIndexCorrespondence() {
+        dict["b"] = nil
+
+        #expect(dict["b"] == nil)
+        #expect(!dict.contains("b"))
+        #expect(dict.count == 2)
+    }
+
+    @Test
+    func `Reinsertion after removal goes to end`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
+
+        dict.values.remove("b")
+        dict["b"] = 20
+
+        let keys = Array(dict.keys)
+        #expect(keys == ["a", "c", "b"])
+    }
+
+    @Test
+    func `Removal shifts indices correctly`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
+
+        dict.values.remove("b")
+
+        // Keys.index should be updated
+        #expect(dict.keys.index("c") == 1)
+        #expect(dict.keys.index("a") == 0)
+    }
+
+    @Test
+    func `Single element dictionary`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["only"] = 42
+
+        #expect(dict.count == 1)
+        #expect(!dict.isEmpty)
+        #expect(dict["only"] == 42)
+        #expect(dict.keys.index("only") == 0)
+
+        dict.values.remove("only")
+        #expect(dict.isEmpty)
+    }
+}
+
+// MARK: - Integration Tests
+
+extension DictionaryOrderedTests.Integration {
+
+    @Test
+    func `CoW: mutation does not affect original`() {
+        var original = Dictionary<String, Int>.Ordered()
+        original["a"] = 1
+        original["b"] = 2
+        original["c"] = 3
+
+        var copy = original
+        copy["d"] = 4
+        copy["a"] = nil
+
+        #expect(Array(original.keys) == ["a", "b", "c"])
+        #expect(Array(copy.keys) == ["b", "c", "d"])
+        #expect(original.count == 3)
+        #expect(copy.count == 3)
+    }
+
+    @Test
+    func `CoW: multiple copies are independent`() {
+        var original = Dictionary<String, Int>.Ordered()
+        original["a"] = 1
+        original["b"] = 2
+
+        var copy1 = original
+        var copy2 = original
+
+        copy1["c"] = 3
+        copy2["a"] = nil
+
+        #expect(Array(original.keys) == ["a", "b"])
+        #expect(Array(copy1.keys) == ["a", "b", "c"])
+        #expect(Array(copy2.keys) == ["b"])
+    }
+
+    @Test
+    func `Key-value index correspondence after operations`() {
         var dict = Dictionary<String, Int>.Ordered()
 
         // Build dictionary
@@ -480,10 +457,8 @@ struct OrderedDictionaryInvariantTests {
         }
     }
 
-    // MARK: - Order Preservation Under Stress
-
-    @Test("Order preserved through many operations")
-    func orderPreservedThroughManyOperations() {
+    @Test
+    func `Order preserved through many operations`() {
         var dict = Dictionary<String, Int>.Ordered()
         var expectedOrder: [String] = []
 
@@ -518,36 +493,74 @@ struct OrderedDictionaryInvariantTests {
         #expect(Array(dict.keys) == expectedOrder)
     }
 
-    // MARK: - Duplicate Key Handling
+    @Test
+    func `Merge keep first is idempotent`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
 
-    @Test("Init throws on duplicate preserves partial state correctly")
-    func initThrowsOnDuplicatePartialState() {
-        // When init throws, no dictionary is created
-        // This test verifies the error contains correct information
-        do {
-            _ = try Dictionary<String, Int>.Ordered([
-                ("a", 1),
-                ("b", 2),
-                ("c", 3),
-                ("a", 10)  // Duplicate
-            ])
-            Issue.record("Expected error to be thrown")
-        } catch let error as Dictionary<String, Int>.Ordered.Error {
-            if case .duplicate(let info) = error {
-                #expect(info.key == "a")
-                #expect(info.first == 0)  // First occurrence at index 0
-            } else {
-                Issue.record("Expected duplicate error")
-            }
-        } catch {
-            Issue.record("Unexpected error type: \(error)")
-        }
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with self should be idempotent
+        dict.merge.keep.first(dict.map { ($0.key, $0.value) })
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
     }
 
-    // MARK: - Pathological Merge Orders
+    @Test
+    func `Merge keep last is idempotent`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
 
-    @Test("Merge with reversed order")
-    func mergeWithReversedOrder() {
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with self should be idempotent
+        dict.merge.keep.last(dict.map { ($0.key, $0.value) })
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    @Test
+    func `Merge keep first with empty is identity`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with empty should be identity
+        dict.merge.keep.first([])
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    @Test
+    func `Merge keep last with empty is identity`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+
+        let originalKeys = Array(dict.keys)
+        let originalValues = (0..<dict.count).map { dict[index: $0].value }
+
+        // Merge with empty should be identity
+        dict.merge.keep.last([])
+
+        #expect(Array(dict.keys) == originalKeys)
+        #expect((0..<dict.count).map { dict[index: $0].value } == originalValues)
+    }
+
+    @Test
+    func `Merge with reversed order`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["b"] = 2
@@ -563,8 +576,8 @@ struct OrderedDictionaryInvariantTests {
         #expect(dict["c"] == 30)
     }
 
-    @Test("Merge with interleaved keys")
-    func mergeWithInterleavedKeys() {
+    @Test
+    func `Merge with interleaved keys`() {
         var dict = Dictionary<String, Int>.Ordered()
         dict["a"] = 1
         dict["c"] = 3
@@ -575,5 +588,16 @@ struct OrderedDictionaryInvariantTests {
 
         // Original keys first, then new keys in merge order
         #expect(Array(dict.keys) == ["a", "c", "e", "b", "d", "f"])
+    }
+
+    @Test(.disabled("Crashes with cross-module BidirectionalCollection conformance"))
+    func `Bidirectional iteration`() {
+        var dict = Dictionary<String, Int>.Ordered()
+        dict["a"] = 1
+        dict["b"] = 2
+        dict["c"] = 3
+
+        let reversed = Array(dict.reversed())
+        #expect(reversed.map { $0.key } == ["c", "b", "a"])
     }
 }
