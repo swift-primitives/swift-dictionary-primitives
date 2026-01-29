@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Set_Primitives
+public import Index_Primitives
 
 // MARK: - Keys Accessor
 
@@ -49,10 +50,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys where Value: ~Copya
     /// Returns the index of the given key, or `nil` if not present.
     ///
     /// - Parameter key: The key to find.
-    /// - Returns: The index of the key.
+    /// - Returns: The typed index of the key.
     /// - Complexity: O(1) average.
     @inlinable
-    public func index(_ key: Key) -> Int? {
+    public func index(_ key: Key) -> Index_Primitives.Index<Key>? {
         _keys.index(key)
     }
 
@@ -64,7 +65,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys where Value: ~Copya
 
     /// The number of keys.
     @inlinable
-    public var count: Int {
+    public var count: Index_Primitives.Index<Key>.Count {
         _keys.count
     }
 
@@ -74,13 +75,20 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys where Value: ~Copya
         _keys.isEmpty
     }
 
-    /// The key at the given index.
+    /// The key at the given typed index.
     ///
-    /// - Parameter index: The index.
+    /// - Parameter index: The typed index.
     /// - Precondition: The index must be in bounds.
     @inlinable
-    public subscript(_ index: Int) -> Key {
+    public subscript(_ index: Index_Primitives.Index<Key>) -> Key {
         _keys[index]
+    }
+
+    /// The key at the given raw index (stdlib compatibility).
+    @inlinable
+    public subscript(raw index: Int) -> Key {
+        let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
+        return _keys[keyIndex]
     }
 
     /// Returns whether the given key exists.

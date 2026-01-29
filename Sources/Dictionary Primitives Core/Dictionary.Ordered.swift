@@ -155,100 +155,17 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             }
         }
 
-        // MARK: - ValueStorage (nested to inherit Value's ~Copyable context)
+        // MARK: - Value Storage
+        //
+        // Uses Storage<Value> from Storage Primitives for value storage.
+        // The Storage type supports ~Copyable elements natively.
 
-        /// Internal storage class for values using ManagedBuffer.
-        ///
-        /// Declared as a nested class inside `Ordered` so that the `Value` generic
-        /// inherits the `~Copyable` suppression from the outer type.
-        public final class ValueStorage: ManagedBuffer<Int, Value> {
-
-            /// Creates empty storage with the specified minimum capacity.
-            @usableFromInline
-            static func create(minimumCapacity: Int) -> ValueStorage {
-                let storage = ValueStorage.create(minimumCapacity: minimumCapacity) { _ in 0 }
-                return unsafe unsafeDowncast(storage, to: ValueStorage.self)
-            }
-
-            deinit {
-                let count = header
-                guard count > 0 else { return }
-                _ = unsafe withUnsafeMutablePointerToElements { elements in
-                    for i in 0..<count {
-                        unsafe (elements + i).deinitialize(count: 1)
-                    }
-                }
-            }
-
-            /// Returns pointer to element storage.
-            @usableFromInline
-            var _elementsPointer: UnsafeMutablePointer<Value> {
-                unsafe withUnsafeMutablePointerToElements { unsafe $0 }
-            }
-
-            /// Initializes value at the given index.
-            @usableFromInline
-            func _initializeValue(at index: Int, to value: consuming Value) {
-                let ptr = unsafe withUnsafeMutablePointerToElements { unsafe $0 + index }
-                unsafe ptr.initialize(to: value)
-            }
-
-            /// Moves value from the given index.
-            @usableFromInline
-            func _moveValue(at index: Int) -> Value {
-                unsafe withUnsafeMutablePointerToElements { elements in
-                    unsafe (elements + index).move()
-                }
-            }
-
-            /// Shifts values left from `from` to fill gap at removed index, then decrements header count.
-            @usableFromInline
-            func _shiftValuesLeftAndDecrement(removedAt index: Int, count: Int) {
-                guard index < count - 1 else {
-                    // Last element, no shift needed
-                    header = count - 1
-                    return
-                }
-                _ = unsafe withUnsafeMutablePointerToElements { elements in
-                    // Move elements from index+1..count to index..count-1
-                    for i in index..<(count - 1) {
-                        unsafe (elements + i).initialize(to: (elements + i + 1).move())
-                    }
-                }
-                header = count - 1
-            }
-
-            /// Moves all values to new storage.
-            @usableFromInline
-            func _moveAllValues(to newStorage: ValueStorage) {
-                let count = header
-                guard count > 0 else { return }
-                _ = unsafe withUnsafeMutablePointerToElements { src in
-                    unsafe newStorage.withUnsafeMutablePointerToElements { dst in
-                        for i in 0..<count {
-                            unsafe (dst + i).initialize(to: (src + i).move())
-                        }
-                    }
-                }
-            }
-
-            /// Deinitializes all values.
-            @usableFromInline
-            func _deinitializeAllValues() {
-                let count = header
-                guard count > 0 else { return }
-                _ = unsafe withUnsafeMutablePointerToElements { elements in
-                    for i in 0..<count {
-                        unsafe (elements + i).deinitialize(count: 1)
-                    }
-                }
-                header = 0
-            }
-        }
+        /// Typealias for value storage type.
+        public typealias ValueStorage = Storage<Value>
 
         public var _keys: Set<Key>.Ordered
 
-        public var _valueStorage: ValueStorage
+        public var _valueStorage: Storage<Value>
 
         /// Cached pointer to value storage. Stored in struct to enable property-based access.
         /// CRITICAL: Must be updated whenever _valueStorage is replaced (reallocation, CoW copy).
@@ -258,8 +175,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         @inlinable
         public init() {
             self._keys = Set<Key>.Ordered()
-            self._valueStorage = ValueStorage.create(minimumCapacity: 0)
-            unsafe (self._cachedValuePtr = _valueStorage._elementsPointer)
+            self._valueStorage = Storage<Value>.create(minimumCapacity: .zero)
+            unsafe (self._cachedValuePtr = _valueStorage.pointer(at: .zero).base)
         }
 
         // Note: No deinit needed - ValueStorage handles cleanup
@@ -293,31 +210,29 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         public struct Bounded: ~Copyable {
             public var _keys: Set<Key>.Ordered
 
-            public var _valueStorage: ValueStorage
+            public var _valueStorage: Storage<Value>
 
             /// Cached pointer to value storage.
             public var _cachedValuePtr: UnsafeMutablePointer<Value>
 
             /// The maximum number of key-value pairs the dictionary can hold.
-            public let capacity: Int
+            public let capacity: Index_Primitives.Index<Key>.Count
 
             /// Creates a bounded ordered dictionary with the specified capacity.
             ///
             /// - Parameter capacity: Maximum number of pairs. Must be non-negative.
             /// - Throws: ``Dictionary/Ordered/Bounded/Error/invalidCapacity`` if capacity is negative.
             @inlinable
-            public init(capacity: Int) throws(Dictionary.Ordered.Bounded.Error) {
-                guard capacity >= 0 else {
-                    throw .invalidCapacity
-                }
+            public init(capacity: Index_Primitives.Index<Key>.Count) throws(Dictionary.Ordered.Bounded.Error) {
                 self._keys = Set<Key>.Ordered()
                 self._keys.reserve(capacity)
-                self._valueStorage = ValueStorage.create(minimumCapacity: capacity)
-                unsafe (self._cachedValuePtr = _valueStorage._elementsPointer)
+                let valueCapacity = capacity.retag(Value.self)
+                self._valueStorage = Storage<Value>.create(minimumCapacity: valueCapacity)
+                unsafe (self._cachedValuePtr = _valueStorage.pointer(at: .zero).base)
                 self.capacity = capacity
             }
 
-            // Note: No deinit needed - ValueStorage handles cleanup
+            // Note: No deinit needed - Storage handles cleanup
         }
 
         // MARK: - Inline Variant
@@ -474,7 +389,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
             /// Heap storage for values when spilled. Nil when using inline storage.
             @usableFromInline
-            var _heapValues: ValueStorage?
+            var _heapValues: Storage<Value>?
 
             /// Cached pointer to heap values. Only valid when _heapValues is non-nil.
             @usableFromInline
@@ -505,9 +420,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                 guard count > 0 else { return }
 
                 if _heapValues != nil {
-                    // Elements are on heap - ValueStorage handles cleanup via its deinit
-                    // Set header count for proper cleanup
-                    _heapValues!.header = count
+                    // Elements are on heap - Storage handles cleanup via its deinit
+                    // Set count for proper cleanup
+                    _heapValues!.count = Index_Primitives.Index<Value>.Count(UInt(count))
                 } else {
                     // Elements are inline - clean up manually
                     let stride = MemoryLayout<Value>.stride
@@ -562,7 +477,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                 // Create heap storage with growth factor
                 let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
                 let newKeys = Set<Key>.Ordered()
-                let newValues = ValueStorage.create(minimumCapacity: newCapacity)
+                let valueCapacity = Index_Primitives.Index<Value>.Count(UInt(newCapacity))
+                let newValues = Storage<Value>.create(minimumCapacity: valueCapacity)
 
                 // Move keys from inline to heap
                 var heapKeys = newKeys
@@ -584,11 +500,11 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                         }
                     }
                 }
-                newValues.header = _count
+                newValues.count = Index_Primitives.Index<Value>.Count(UInt(_count))
 
                 _heapKeys = heapKeys
                 _heapValues = newValues
-                unsafe (_heapValuePtr = newValues._elementsPointer)
+                unsafe (_heapValuePtr = newValues.pointer(at: .zero).base)
             }
         }
     }
