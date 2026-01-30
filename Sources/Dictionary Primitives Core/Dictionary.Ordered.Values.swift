@@ -97,10 +97,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     public mutating func modify(_ key: Key, _ transform: (inout Value) -> Void) -> Value? {
         guard let index = dict._keys.index(key) else { return nil }
         // Read, modify, write back
-        var value = dict._valueStorage._readValue(at: index)
+        var value = dict._values._readValue(at: index)
         transform(&value)
-        _ = dict._valueStorage._moveValue(at: index)
-        dict._valueStorage._initializeValue(at: index, to: value)
+        _ = dict._values._moveValue(at: index)
+        dict._values._initializeValue(at: index, to: value)
         return value
     }
 
@@ -124,13 +124,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     public subscript(_ index: Index_Primitives.Index<Key>) -> Value {
         get {
             precondition(index < dict.count, "Index out of bounds")
-            return dict._valueStorage._readValue(at: index)
+            return dict._values._readValue(at: index)
         }
         set {
             precondition(index < dict.count, "Index out of bounds")
             dict.makeUnique()
-            _ = dict._valueStorage._moveValue(at: index)
-            dict._valueStorage._initializeValue(at: index, to: newValue)
+            _ = dict._values._moveValue(at: index)
+            dict._values._initializeValue(at: index, to: newValue)
         }
     }
 
@@ -142,13 +142,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     public subscript(raw index: Int) -> Value {
         get {
             precondition(index >= 0 && index < Int(bitPattern: dict.count), "Index out of bounds")
-            return dict._valueStorage._readValue(at: index)
+            return dict._values._readValue(at: index)
         }
         set {
             precondition(index >= 0 && index < Int(bitPattern: dict.count), "Index out of bounds")
             dict.makeUnique()
-            _ = dict._valueStorage._moveValue(at: index)
-            dict._valueStorage._initializeValue(at: index, to: newValue)
+            _ = dict._values._moveValue(at: index)
+            dict._values._initializeValue(at: index, to: newValue)
         }
     }
 
@@ -184,7 +184,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
 
         @usableFromInline
         init(_ dict: Dictionary<Key, Value>.Ordered) {
-            self.storage = dict._valueStorage
+            self.storage = dict._values
             self.index = .zero
             self.count = dict.count
         }

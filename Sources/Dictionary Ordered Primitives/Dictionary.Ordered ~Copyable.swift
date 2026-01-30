@@ -50,13 +50,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         public mutating func callAsFunction(_ body: (consuming Entry) -> Void) {
             let count = Int(bitPattern: unsafe _base.pointee.count)
             guard count > 0 else { return }
-            _ = unsafe _base.pointee._valueStorage.withUnsafeMutablePointerToElements { elements in
+            _ = unsafe _base.pointee._values.withUnsafeMutablePointerToElements { elements in
                 for i in 0..<count {
                     let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(i)))
                     body(Entry(key: unsafe _base.pointee._keys[keyIndex], value: unsafe (elements + i).move()))
                 }
             }
-            unsafe _base.pointee._valueStorage.count = .zero
+            unsafe _base.pointee._values.count = .zero
             unsafe _base.pointee._keys.clear(keepingCapacity: true)
         }
     }

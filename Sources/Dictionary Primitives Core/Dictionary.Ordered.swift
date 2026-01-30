@@ -27,7 +27,7 @@ public import Index_Primitives
 //
 // - The ordered key set (`_keys: Set<Key>.Ordered`) is the source of truth for ordering
 // - Value storage indices correspond 1:1 with key indices
-// - `_keys[i]` and `_valueStorage[i]` always refer to the same key-value pair
+// - `_keys[i]` and `_values[i]` always refer to the same key-value pair
 //
 // ## Ordering Semantics
 //
@@ -167,18 +167,18 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
         public var _keys: Set<Key>.Ordered
 
-        public var _valueStorage: Storage<Value>
+        public var _values: Storage<Value>
 
         /// Cached pointer to value storage. Stored in struct to enable property-based access.
-        /// CRITICAL: Must be updated whenever _valueStorage is replaced (reallocation, CoW copy).
+        /// CRITICAL: Must be updated whenever _values is replaced (reallocation, CoW copy).
         public var _cachedValuePtr: UnsafeMutablePointer<Value>
 
         /// Creates an empty ordered dictionary.
         @inlinable
         public init() {
             self._keys = Set<Key>.Ordered()
-            self._valueStorage = Storage<Value>.create(minimumCapacity: .zero)
-            unsafe (self._cachedValuePtr = _valueStorage.pointer(at: .zero).base)
+            self._values = Storage<Value>.create(minimumCapacity: .zero)
+            unsafe (self._cachedValuePtr = _values.pointer(at: .zero).base)
         }
 
         // Note: No deinit needed - ValueStorage handles cleanup
@@ -212,7 +212,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         public struct Bounded: ~Copyable {
             public var _keys: Set<Key>.Ordered
 
-            public var _valueStorage: Storage<Value>
+            public var _values: Storage<Value>
 
             /// Cached pointer to value storage.
             public var _cachedValuePtr: UnsafeMutablePointer<Value>
@@ -229,8 +229,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                 self._keys = Set<Key>.Ordered()
                 self._keys.reserve(capacity)
                 let valueCapacity = capacity.retag(Value.self)
-                self._valueStorage = Storage<Value>.create(minimumCapacity: valueCapacity)
-                unsafe (self._cachedValuePtr = _valueStorage.pointer(at: .zero).base)
+                self._values = Storage<Value>.create(minimumCapacity: valueCapacity)
+                unsafe (self._cachedValuePtr = _values.pointer(at: .zero).base)
                 self.capacity = capacity
             }
 
@@ -251,7 +251,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         public struct Inline<let capacity: Int>: ~Copyable {
             /// Value storage using Storage.Inline from storage-primitives.
             @usableFromInline
-            var _valueStorage: Storage<Value>.Inline<capacity>
+            var _values: Storage<Value>.Inline<capacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -276,7 +276,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @inlinable
             public init() {
                 do {
-                    self._valueStorage = try Storage<Value>.Inline<capacity>()
+                    self._values = try Storage<Value>.Inline<capacity>()
                 } catch {
                     switch error {
                     case .strideExceedsSlotSize(let stride, let max):
@@ -292,7 +292,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
             deinit {
                 guard _count > 0 else { return }
-                _valueStorage.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+                _values.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
             }
         }
 

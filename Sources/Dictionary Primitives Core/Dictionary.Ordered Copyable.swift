@@ -30,8 +30,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
             let currentCount = _keys.count
             ensureCapacity(currentCount)
             let valueIndex = currentCount.retag(Value.self).subtract.saturating(.one)
-            _valueStorage.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
-            _valueStorage.count = valueIndex + .one
+            _values.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
+            _values.count = valueIndex + .one
         }
     }
 
@@ -51,15 +51,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
                 let valueIndex = existingKeyIndex.retag(Value.self)
                 let existingValue = unsafe _cachedValuePtr[Int(bitPattern: valueIndex)]
                 let newValue = try combine(existingValue, value)
-                _ = _valueStorage.move(at: valueIndex)
-                _valueStorage.initialize(to: newValue, at: valueIndex)
+                _ = _values.move(at: valueIndex)
+                _values.initialize(to: newValue, at: valueIndex)
             } else {
                 let currentCount = _keys.count
                 ensureCapacity(currentCount + .one)
                 _keys.insert(key)
                 let valueIndex = currentCount.retag(Value.self)
-                _valueStorage.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
-                _valueStorage.count = valueIndex + .one
+                _values.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
+                _values.count = valueIndex + .one
             }
         }
     }
@@ -71,9 +71,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     mutating func makeUnique() {
-        if !isKnownUniquelyReferenced(&_valueStorage) {
-            _valueStorage = _valueStorage.copy()
-            unsafe (_cachedValuePtr = _valueStorage.pointer(at: .zero).base)
+        if !isKnownUniquelyReferenced(&_values) {
+            _values = _values.copy()
+            unsafe (_cachedValuePtr = _values.pointer(at: .zero).base)
         }
     }
 
@@ -86,15 +86,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         makeUnique()
         if let existingKeyIndex = _keys.index(key) {
             let valueIndex = existingKeyIndex.retag(Value.self)
-            _ = _valueStorage.move(at: valueIndex)
-            _valueStorage.initialize(to: value, at: valueIndex)
+            _ = _values.move(at: valueIndex)
+            _values.initialize(to: value, at: valueIndex)
         } else {
             let currentCount = _keys.count
             ensureCapacity(currentCount + .one)
             _keys.insert(key)
             let valueIndex = currentCount.retag(Value.self)
-            _valueStorage.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
-            _valueStorage.count = valueIndex + .one
+            _values.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
+            _values.count = valueIndex + .one
         }
     }
 
@@ -113,8 +113,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         guard let keyIndex = _keys.index(key) else { return nil }
         let valueIndex = keyIndex.retag(Value.self)
         _keys.remove(key)
-        let value = _valueStorage.move(at: valueIndex)
-        _valueStorage.shiftLeft(removedAt: valueIndex)
+        let value = _values.move(at: valueIndex)
+        _values.shiftLeft(removedAt: valueIndex)
         return value
     }
 
@@ -128,10 +128,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public mutating func clear(keepingCapacity: Bool = false) {
         makeUnique()
         _keys.clear(keepingCapacity: keepingCapacity)
-        _valueStorage.deinitialize()
+        _values.deinitialize()
         if !keepingCapacity {
-            _valueStorage = Storage<Value>.create(minimumCapacity: .zero)
-            unsafe (_cachedValuePtr = _valueStorage.pointer(at: .zero).base)
+            _values = Storage<Value>.create(minimumCapacity: .zero)
+            unsafe (_cachedValuePtr = _values.pointer(at: .zero).base)
         }
     }
 }
@@ -286,7 +286,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: Copy
         get {
             guard let index = index(of: key) else { return nil }
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            return _valueStorage.withElement(at: valueIndex) { $0 }
+            return _values.withElement(at: valueIndex) { $0 }
         }
     }
 
@@ -295,7 +295,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: Copy
     public subscript(index index: Int) -> (key: Key, value: Value) {
         precondition(index >= 0 && index < count, "Index out of bounds")
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return (_keys[index]!, _valueStorage.withElement(at: valueIndex) { $0 })
+        return (_keys[index]!, _values.withElement(at: valueIndex) { $0 })
     }
 }
 

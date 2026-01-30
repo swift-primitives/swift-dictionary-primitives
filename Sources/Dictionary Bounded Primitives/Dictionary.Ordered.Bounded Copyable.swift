@@ -24,7 +24,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
         let _keys: Set<Key>.Ordered
 
         @usableFromInline
-        let _valueStorage: Dictionary<Key, Value>.Ordered.ValueStorage
+        let _values: Dictionary<Key, Value>.Ordered.ValueStorage
 
         @usableFromInline
         var _index: Index_Primitives.Index<Key>
@@ -35,7 +35,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
         @usableFromInline
         init(_ dict: borrowing Dictionary<Key, Value>.Ordered.Bounded) {
             self._keys = dict._keys
-            self._valueStorage = dict._valueStorage
+            self._values = dict._values
             self._index = .zero
             self._count = dict.count
         }
@@ -44,7 +44,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
         public mutating func next() -> Element? {
             guard _index < _count else { return nil }
             let key = _keys[_index]
-            let value = _valueStorage._readValue(at: _index)
+            let value = _values._readValue(at: _index)
             _index = _index + .one
             return (key, value)
         }
@@ -93,7 +93,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Swift.Collectio
         precondition(position >= 0 && position < countInt, "Index out of bounds")
         let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(position)))
         let key = _keys[keyIndex]
-        let value = _valueStorage._readValue(at: position)
+        let value = _values._readValue(at: position)
         return (key, value)
     }
 
