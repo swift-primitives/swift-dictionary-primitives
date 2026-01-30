@@ -55,7 +55,7 @@ extension Dictionary.Ordered where Value: Copyable {
     @inlinable
     public func value(at index: Dictionary<Key, Value>.Index) -> Value {
         precondition(index < count, "Index out of bounds")
-        let pos = Int(bitPattern: index.position)
+        let pos = Int(bitPattern: index)
         return unsafe _cachedValuePtr[pos]
     }
 
@@ -67,7 +67,7 @@ extension Dictionary.Ordered where Value: Copyable {
     public func entry(at index: Dictionary<Key, Value>.Index) -> (key: Key, value: Value)? {
         guard index < count else { return nil }
         let key = _keys[index]
-        let pos = Int(bitPattern: index.position)
+        let pos = Int(bitPattern: index)
         return unsafe (key, _cachedValuePtr[pos])
     }
 }

@@ -14,12 +14,13 @@ public import Index_Primitives
 
 // MARK: - Hoisted Error Types (Module Level)
 //
-// Swift does not allow nested types inside generic types to be easily accessed.
-// These error types are hoisted to module level and exposed via typealiases to
-// provide the expected Nest.Name API (Dictionary.Ordered.Error, etc.).
-//
-// This is a documented exception per [API-EXC-001] due to Swift language
-// limitations with generic nested types.
+// WORKAROUND: Hoisted error types due to Swift generic nesting limitation
+// WHY: Swift does not allow nested types inside generic types to be easily accessed.
+//      These error types are hoisted to module level and exposed via typealiases to
+//      provide the expected Nest.Name API (Dictionary.Ordered.Error, etc.).
+// WHEN TO REMOVE: When Swift allows direct generic nested type access (nested types
+//                 inside generic types accessible without module-level hoisting)
+// TRACKING: [API-EXC-001] in swift-institute documentation
 
 /// Hoisted implementation of ``Dictionary/Ordered/Error``.
 ///

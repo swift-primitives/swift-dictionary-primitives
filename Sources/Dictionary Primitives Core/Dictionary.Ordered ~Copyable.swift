@@ -168,7 +168,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
         guard let keyIndex = _keys.index(key) else { return nil }
-        let pos = Int(bitPattern: keyIndex.position)
+        let pos = Int(bitPattern: keyIndex)
         return body(unsafe _cachedValuePtr[pos])
     }
 
@@ -182,7 +182,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     @inlinable
     public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) -> R) -> R {
         precondition(index < _keys.count, "Index out of bounds")
-        let pos = Int(bitPattern: index.position)
+        let pos = Int(bitPattern: index)
         return body(unsafe _cachedValuePtr[pos])
     }
 }
@@ -302,7 +302,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
         guard let keyIndex = _keys.index(key) else { return nil }
-        let pos = Int(bitPattern: keyIndex.position)
+        let pos = Int(bitPattern: keyIndex)
         return body(unsafe _cachedValuePtr[pos])
     }
 
@@ -310,7 +310,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     @inlinable
     public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) -> R) -> R {
         precondition(index < count, "Index out of bounds")
-        let pos = Int(bitPattern: index.position)
+        let pos = Int(bitPattern: index)
         return body(unsafe _cachedValuePtr[pos])
     }
 }
@@ -579,7 +579,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
         if let heapKeys = _heapKeys {
             guard let keyIndex = heapKeys.index(key) else { return nil }
-            let pos = Int(bitPattern: keyIndex.position)
+            let pos = Int(bitPattern: keyIndex)
             return body(unsafe _heapValuePtr![pos])
         }
         guard let index = _inlineIndex(of: key) else { return nil }
