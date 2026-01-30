@@ -19,6 +19,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../swift-set-primitives"),
+        .package(path: "../swift-hash-table-primitives"),
         .package(path: "../swift-index-primitives"),
         .package(path: "../swift-identity-primitives"),
         .package(path: "../swift-collection-primitives"),
@@ -32,6 +33,7 @@ let package = Package(
             name: "Dictionary Primitives Core",
             dependencies: [
                 .product(name: "Set Primitives", package: "swift-set-primitives"),
+                .product(name: "Hash Table Primitives", package: "swift-hash-table-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
