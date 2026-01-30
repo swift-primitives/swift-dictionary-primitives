@@ -11,6 +11,8 @@
 
 import Testing
 @testable import Dictionary_Primitives
+import Index_Primitives_Test_Support
+import Identity_Primitives_Test_Support
 
 // MARK: - Dictionary.Ordered Tests
 //
@@ -76,7 +78,8 @@ extension DictionaryOrderedTests.Unit {
         #expect(!dict.contains("b"))
 
         // Keys.index should be updated
-        #expect(dict.keys.index("c") == 1)
+        let indexC: Index<String>? = dict.keys.index("c")
+        #expect(indexC == 1)
     }
 
     @Test
@@ -86,10 +89,14 @@ extension DictionaryOrderedTests.Unit {
         dict["second"] = 2
         dict["third"] = 3
 
-        #expect(dict.keys.index("first") == 0)
-        #expect(dict.keys.index("second") == 1)
-        #expect(dict.keys.index("third") == 2)
-        #expect(dict.keys.index("fourth") == nil)
+        let indexFirst: Index<String>? = dict.keys.index("first")
+        let indexSecond: Index<String>? = dict.keys.index("second")
+        let indexThird: Index<String>? = dict.keys.index("third")
+        let indexFourth: Index<String>? = dict.keys.index("fourth")
+        #expect(indexFirst == 0)
+        #expect(indexSecond == 1)
+        #expect(indexThird == 2)
+        #expect(indexFourth == nil)
     }
 
     @Test
@@ -289,7 +296,8 @@ extension DictionaryOrderedTests.EdgeCase {
         } catch let error as Dictionary<String, Int>.Ordered.Error {
             if case .duplicate(let info) = error {
                 #expect(info.key == "a")
-                #expect(info.first == 0)  // First occurrence at index 0
+                let first: Index<String> = info.first
+                #expect(first == 0)  // First occurrence at index 0
             } else {
                 Issue.record("Expected duplicate error")
             }
@@ -370,8 +378,10 @@ extension DictionaryOrderedTests.EdgeCase {
         dict.values.remove("b")
 
         // Keys.index should be updated
-        #expect(dict.keys.index("c") == 1)
-        #expect(dict.keys.index("a") == 0)
+        let indexC: Index<String>? = dict.keys.index("c")
+        let indexA: Index<String>? = dict.keys.index("a")
+        #expect(indexC == 1)
+        #expect(indexA == 0)
     }
 
     @Test
@@ -382,7 +392,8 @@ extension DictionaryOrderedTests.EdgeCase {
         #expect(dict.count == 1)
         #expect(!dict.isEmpty)
         #expect(dict["only"] == 42)
-        #expect(dict.keys.index("only") == 0)
+        let indexOnly: Index<String>? = dict.keys.index("only")
+        #expect(indexOnly == 0)
 
         dict.values.remove("only")
         #expect(dict.isEmpty)
@@ -437,8 +448,9 @@ extension DictionaryOrderedTests.Integration {
         }
 
         // Verify correspondence
-        for i in 0..<dict.count {
-            let key = dict.keys[i]
+        let count1 = Int(bitPattern: dict.count)
+        for i in 0..<count1 {
+            let key = dict.keys[raw: i]
             let pair = dict[index: i]
             #expect(pair.key == key)
             #expect(dict[key] == pair.value)
@@ -449,8 +461,9 @@ extension DictionaryOrderedTests.Integration {
         dict.values.remove("key7")
 
         // Verify correspondence still holds
-        for i in 0..<dict.count {
-            let key = dict.keys[i]
+        let count2 = Int(bitPattern: dict.count)
+        for i in 0..<count2 {
+            let key = dict.keys[raw: i]
             let pair = dict[index: i]
             #expect(pair.key == key)
             #expect(dict[key] == pair.value)

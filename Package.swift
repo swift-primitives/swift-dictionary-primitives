@@ -20,6 +20,7 @@ let package = Package(
     dependencies: [
         .package(path: "../swift-set-primitives"),
         .package(path: "../swift-index-primitives"),
+        .package(path: "../swift-identity-primitives"),
         .package(path: "../swift-collection-primitives"),
         .package(path: "../swift-input-primitives"),
         .package(path: "../swift-sequence-primitives"),
@@ -65,7 +66,11 @@ let package = Package(
         ),
         .testTarget(
             name: "Dictionary Primitives Tests",
-            dependencies: ["Dictionary Primitives"]
+            dependencies: [
+                "Dictionary Primitives",
+                .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
+                .product(name: "Identity Primitives Test Support", package: "swift-identity-primitives"),
+            ]
         )
     ],
     swiftLanguageModes: [.v6]

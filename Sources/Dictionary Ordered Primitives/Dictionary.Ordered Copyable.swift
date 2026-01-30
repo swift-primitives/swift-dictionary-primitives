@@ -11,6 +11,7 @@
 
 public import Dictionary_Primitives_Core
 public import Sequence_Primitives
+public import Index_Primitives
 
 // MARK: - Iterator
 
@@ -26,20 +27,25 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         let _valueStorage: Dictionary<Key, Value>.Ordered.ValueStorage
 
         @usableFromInline
-        var _index: Int = 0
+        var _index: Index_Primitives.Index<Key>
+
+        @usableFromInline
+        let _count: Index_Primitives.Index<Key>.Count
 
         @usableFromInline
         init(_ dict: borrowing Dictionary<Key, Value>.Ordered) {
             self._keys = dict._keys
             self._valueStorage = dict._valueStorage
+            self._index = .zero
+            self._count = dict.count
         }
 
         @inlinable
         public mutating func next() -> Element? {
-            guard _index < _keys.count else { return nil }
+            guard _index < _count else { return nil }
             let key = _keys[_index]
             let value = _valueStorage._readValue(at: _index)
-            _index += 1
+            _index = _index + .one
             return (key, value)
         }
     }
@@ -59,7 +65,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Sequence.`Protocol` whe
 
     /// Returns the count as the underestimated count since we know the exact size.
     @inlinable
-    public var underestimatedCount: Int { count }
+    public var underestimatedCount: Int { Int(bitPattern: count) }
 }
 
 // MARK: - Swift.Sequence Conformance (Bridge)
@@ -79,12 +85,14 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.Collection where 
     public var startIndex: Int { 0 }
 
     @inlinable
-    public var endIndex: Int { count }
+    public var endIndex: Int { Int(bitPattern: count) }
 
     @inlinable
     public subscript(position: Int) -> (key: Key, value: Value) {
-        precondition(position >= 0 && position < count, "Index out of bounds")
-        let key = _keys[position]
+        let countInt = Int(bitPattern: count)
+        precondition(position >= 0 && position < countInt, "Index out of bounds")
+        let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(position)))
+        let key = _keys[keyIndex]
         let value = _valueStorage._readValue(at: position)
         return (key, value)
     }

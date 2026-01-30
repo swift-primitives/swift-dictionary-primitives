@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Dictionary_Primitives_Core
+public import Index_Primitives
 
 // MARK: - Note on Swift.Collection Conformances
 //
@@ -47,14 +48,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         @_lifetime(&self)
         @inlinable
         public mutating func callAsFunction(_ body: (consuming Entry) -> Void) {
-            let count = unsafe _base.pointee._valueStorage.header
+            let count = Int(bitPattern: unsafe _base.pointee.count)
             guard count > 0 else { return }
             _ = unsafe _base.pointee._valueStorage.withUnsafeMutablePointerToElements { elements in
                 for i in 0..<count {
-                    body(Entry(key: unsafe _base.pointee._keys[i], value: unsafe (elements + i).move()))
+                    let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(i)))
+                    body(Entry(key: unsafe _base.pointee._keys[keyIndex], value: unsafe (elements + i).move()))
                 }
             }
-            unsafe _base.pointee._valueStorage.header = 0
+            unsafe _base.pointee._valueStorage.count = .zero
             unsafe _base.pointee._keys.clear(keepingCapacity: true)
         }
     }

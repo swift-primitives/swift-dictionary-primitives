@@ -11,6 +11,8 @@
 
 import Testing
 @testable import Dictionary_Primitives
+import Index_Primitives_Test_Support
+import Identity_Primitives_Test_Support
 
 // MARK: - Dictionary.Ordered Model Tests
 //
@@ -166,7 +168,8 @@ extension DictionaryOrderedModelTests.Unit {
 
         // Test index lookup for all keys
         for key in 0..<300 {
-            #expect(orderedDict.keys.index(key) == model.index(key))
+            let orderedIndex = orderedDict.keys.index(key).map { Int(bitPattern: $0) }
+            #expect(orderedIndex == model.index(key))
         }
     }
 
@@ -314,7 +317,8 @@ extension DictionaryOrderedModelTests.EdgeCase {
 
         // Verify indices shifted correctly
         for key in model.keys {
-            #expect(orderedDict.keys.index(key) == model.index(key))
+            let orderedIndex = orderedDict.keys.index(key).map { Int(bitPattern: $0) }
+            #expect(orderedIndex == model.index(key))
         }
 
         #expect(Array(orderedDict.keys) == model.keys)

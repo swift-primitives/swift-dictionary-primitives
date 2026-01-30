@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Set_Primitives
+public import Index_Primitives
 
 // MARK: - Values Accessor (Copyable values only)
 //
@@ -105,7 +106,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
 
     /// The number of values.
     @inlinable
-    public var count: Int {
+    public var count: Index_Primitives.Index<Key>.Count {
         dict.count
     }
 
@@ -115,18 +116,36 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
         dict.isEmpty
     }
 
-    /// The value at the given index.
+    /// The value at the given typed index.
     ///
-    /// - Parameter index: The index.
+    /// - Parameter index: The typed index.
     /// - Precondition: The index must be in bounds.
     @inlinable
-    public subscript(_ index: Int) -> Value {
+    public subscript(_ index: Index_Primitives.Index<Key>) -> Value {
         get {
-            precondition(index >= 0 && index < dict.count, "Index out of bounds")
+            precondition(index < dict.count, "Index out of bounds")
             return dict._valueStorage._readValue(at: index)
         }
         set {
-            precondition(index >= 0 && index < dict.count, "Index out of bounds")
+            precondition(index < dict.count, "Index out of bounds")
+            dict.makeUnique()
+            _ = dict._valueStorage._moveValue(at: index)
+            dict._valueStorage._initializeValue(at: index, to: newValue)
+        }
+    }
+
+    /// The value at the given raw index (stdlib compatibility).
+    ///
+    /// - Parameter index: The raw integer index.
+    /// - Precondition: The index must be in bounds.
+    @inlinable
+    public subscript(raw index: Int) -> Value {
+        get {
+            precondition(index >= 0 && index < Int(bitPattern: dict.count), "Index out of bounds")
+            return dict._valueStorage._readValue(at: index)
+        }
+        set {
+            precondition(index >= 0 && index < Int(bitPattern: dict.count), "Index out of bounds")
             dict.makeUnique()
             _ = dict._valueStorage._moveValue(at: index)
             dict._valueStorage._initializeValue(at: index, to: newValue)
@@ -158,23 +177,23 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
         let storage: Dictionary<Key, Value>.Ordered.ValueStorage
 
         @usableFromInline
-        var index: Int
+        var index: Index_Primitives.Index<Key>
 
         @usableFromInline
-        let count: Int
+        let count: Index_Primitives.Index<Key>.Count
 
         @usableFromInline
         init(_ dict: Dictionary<Key, Value>.Ordered) {
             self.storage = dict._valueStorage
-            self.index = 0
-            self.count = dict._valueStorage.header
+            self.index = .zero
+            self.count = dict.count
         }
 
         @inlinable
         public mutating func next() -> Value? {
             guard index < count else { return nil }
             let value = storage._readValue(at: index)
-            index += 1
+            index = index + .one
             return value
         }
     }

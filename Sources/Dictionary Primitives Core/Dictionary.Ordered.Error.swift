@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Set_Primitives
+public import Index_Primitives
 
 // MARK: - Hoisted Error Types (Module Level)
 //
@@ -35,11 +36,11 @@ public enum __DictionaryOrderedError<Key: Hash.`Protocol`>: Swift.Error {
 
     /// Bounds violation payload.
     public struct Bounds: Sendable, Equatable {
-        public let index: Int
-        public let count: Int
+        public let index: Index_Primitives.Index<Key>
+        public let count: Index_Primitives.Index<Key>.Count
 
         @inlinable
-        public init(index: Int, count: Int) {
+        public init(index: Index_Primitives.Index<Key>, count: Index_Primitives.Index<Key>.Count) {
             self.index = index
             self.count = count
         }
@@ -57,13 +58,13 @@ public enum __DictionaryOrderedError<Key: Hash.`Protocol`>: Swift.Error {
         public let key: Key
 
         /// Index of the first occurrence.
-        public let first: Int
+        public let first: Index_Primitives.Index<Key>
 
         /// Index where the duplicate was found.
-        public let second: Int
+        public let second: Index_Primitives.Index<Key>.Count
 
         @inlinable
-        public init(key: Key, first: Int, second: Int) {
+        public init(key: Key, first: Index_Primitives.Index<Key>, second: Index_Primitives.Index<Key>.Count) {
             self.key = key
             self.first = first
             self.second = second
@@ -76,13 +77,13 @@ public enum __DictionaryOrderedError<Key: Hash.`Protocol`>: Swift.Error {
 /// - Note: Use ``Dictionary/Ordered/Bounded/Error`` in your code, not this type directly.
 public enum __DictionaryOrderedBoundedError<Key: Hash.`Protocol`>: Swift.Error {
     /// An index was out of bounds.
-    case bounds(index: Int, count: Int)
+    case bounds(index: Index_Primitives.Index<Key>, count: Index_Primitives.Index<Key>.Count)
 
     /// An operation was attempted on an empty dictionary.
     case empty
 
     /// A duplicate key was detected.
-    case duplicate(key: Key, first: Int, second: Int)
+    case duplicate(key: Key, first: Index_Primitives.Index<Key>, second: Index_Primitives.Index<Key>.Count)
 
     /// The dictionary is full and cannot accept more pairs.
     case overflow
@@ -99,7 +100,7 @@ public enum __DictionaryOrderedInlineError<Key: Hash.`Protocol`>: Swift.Error {
     case overflow
 
     /// A duplicate key was detected.
-    case duplicate(key: Key, first: Int, second: Int)
+    case duplicate(key: Key, first: Index_Primitives.Index<Key>, second: Index_Primitives.Index<Key>.Count)
 }
 
 // MARK: - Sendable
@@ -121,9 +122,12 @@ extension __DictionaryOrderedInlineError: Equatable where Key: Equatable {}
 extension __DictionaryOrderedError: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .bounds(let e): return "index \(e.index) out of bounds for count \(e.count)"
-        case .empty: return "operation attempted on empty ordered dictionary"
-        case .duplicate(let e): return "duplicate key '\(e.key)' at indices \(e.first) and \(e.second)"
+        case .bounds(let e):
+            return "index \(Int(bitPattern: e.index)) out of bounds for count \(Int(bitPattern: e.count))"
+        case .empty:
+            return "operation attempted on empty ordered dictionary"
+        case .duplicate(let e):
+            return "duplicate key '\(e.key)' at indices \(Int(bitPattern: e.first)) and \(Int(bitPattern: e.second))"
         }
     }
 }
@@ -131,11 +135,16 @@ extension __DictionaryOrderedError: CustomStringConvertible {
 extension __DictionaryOrderedBoundedError: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .bounds(let index, let count): return "index \(index) out of bounds for count \(count)"
-        case .empty: return "operation attempted on empty ordered dictionary"
-        case .duplicate(let key, let first, let second): return "duplicate key '\(key)' at indices \(first) and \(second)"
-        case .overflow: return "bounded dictionary is full"
-        case .invalidCapacity: return "invalid capacity"
+        case .bounds(let index, let count):
+            return "index \(Int(bitPattern: index)) out of bounds for count \(Int(bitPattern: count))"
+        case .empty:
+            return "operation attempted on empty ordered dictionary"
+        case .duplicate(let key, let first, let second):
+            return "duplicate key '\(key)' at indices \(Int(bitPattern: first)) and \(Int(bitPattern: second))"
+        case .overflow:
+            return "bounded dictionary is full"
+        case .invalidCapacity:
+            return "invalid capacity"
         }
     }
 }
@@ -143,8 +152,10 @@ extension __DictionaryOrderedBoundedError: CustomStringConvertible {
 extension __DictionaryOrderedInlineError: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .overflow: return "inline dictionary is full"
-        case .duplicate(let key, let first, let second): return "duplicate key '\(key)' at indices \(first) and \(second)"
+        case .overflow:
+            return "inline dictionary is full"
+        case .duplicate(let key, let first, let second):
+            return "duplicate key '\(key)' at indices \(Int(bitPattern: first)) and \(Int(bitPattern: second))"
         }
     }
 }

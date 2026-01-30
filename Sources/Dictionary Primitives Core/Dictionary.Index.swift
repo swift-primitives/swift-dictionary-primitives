@@ -41,22 +41,21 @@ extension Dictionary.Ordered where Value: Copyable {
     /// Accesses the key at the given typed index.
     ///
     /// - Parameter index: The typed index of the entry to access.
-    /// - Precondition: `index.position` must be in `0..<count`.
+    /// - Precondition: `index` must be in bounds.
     @inlinable
     public func key(at index: Dictionary<Key, Value>.Index) -> Key {
-        let pos = Int(bitPattern: index.position)
-        precondition(pos >= 0 && pos < count, "Index out of bounds")
-        return _keys[pos]
+        precondition(index < count, "Index out of bounds")
+        return _keys[index]
     }
 
     /// Accesses the value at the given typed index.
     ///
     /// - Parameter index: The typed index of the entry to access.
-    /// - Precondition: `index.position` must be in `0..<count`.
+    /// - Precondition: `index` must be in bounds.
     @inlinable
     public func value(at index: Dictionary<Key, Value>.Index) -> Value {
+        precondition(index < count, "Index out of bounds")
         let pos = Int(bitPattern: index.position)
-        precondition(pos >= 0 && pos < count, "Index out of bounds")
         return unsafe _cachedValuePtr[pos]
     }
 
@@ -66,9 +65,9 @@ extension Dictionary.Ordered where Value: Copyable {
     /// - Returns: The key-value pair at the index, or `nil` if out of bounds.
     @inlinable
     public func entry(at index: Dictionary<Key, Value>.Index) -> (key: Key, value: Value)? {
+        guard index < count else { return nil }
+        let key = _keys[index]
         let pos = Int(bitPattern: index.position)
-        guard pos >= 0 && pos < count else { return nil }
-        let key = _keys[pos]
         return unsafe (key, _cachedValuePtr[pos])
     }
 }
