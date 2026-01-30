@@ -317,7 +317,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
 
 // MARK: - Inline Variant (~Copyable)
 
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Copyable {
     /// Errors that can occur during inline ordered dictionary operations.
     public typealias Error = __DictionaryOrderedInlineError<Key>
 
@@ -389,7 +389,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Cop
         let valueIndex = Index<Value>(Ordinal(UInt(index)))
         let value = _values.move(at: valueIndex)
 
-        // Shift values left using Storage.Inline's shift API
+        // Shift values left using Storage.Static's shift API
         _values.shift.left(removedAt: valueIndex, count: Index<Value>.Count(UInt(_count)))
 
         // Shift keys left
@@ -504,13 +504,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             if let existingIndex = _inlineIndex(of: key) {
                 // Update existing - move old value out, initialize with new
                 let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(existingIndex)))
-                _ = _inlineValueStorage.move(at: valueIndex)
-                _inlineValueStorage.initialize(to: value, at: valueIndex)
+                _ = _inlineValues.move(at: valueIndex)
+                _inlineValues.initialize(to: value, at: valueIndex)
             } else if _count < inlineCapacity {
                 // Still room in inline storage
                 _inlineKeys[_count] = key
                 let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(_count)))
-                _inlineValueStorage.initialize(to: value, at: valueIndex)
+                _inlineValues.initialize(to: value, at: valueIndex)
                 _count += 1
             } else {
                 // Need to spill to heap
@@ -546,10 +546,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             guard let index = _inlineIndex(of: key) else { return nil }
 
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            let value = _inlineValueStorage.move(at: valueIndex)
+            let value = _inlineValues.move(at: valueIndex)
 
-            // Shift values left using Storage.Inline's shift API
-            _inlineValueStorage.shift.left(removedAt: valueIndex, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+            // Shift values left using Storage.Static's shift API
+            _inlineValues.shift.left(removedAt: valueIndex, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
 
             // Shift keys left
             for i in index..<(_count - 1) {
@@ -570,7 +570,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             heapValues.deinitialize()
         } else {
             if _count > 0 {
-                _inlineValueStorage.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+                _inlineValues.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
             }
             for i in 0..<_count {
                 _inlineKeys[i] = nil
@@ -589,7 +589,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         }
         guard let index = _inlineIndex(of: key) else { return nil }
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return _inlineValueStorage.withElement(at: valueIndex, body)
+        return _inlineValues.withElement(at: valueIndex, body)
     }
 
     /// Accesses the value at the given index via closure (for ~Copyable values).
@@ -600,7 +600,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             return body(unsafe _heapValuePtr![index])
         }
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return _inlineValueStorage.withElement(at: valueIndex, body)
+        return _inlineValues.withElement(at: valueIndex, body)
     }
 }
 

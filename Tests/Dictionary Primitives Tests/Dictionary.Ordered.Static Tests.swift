@@ -12,12 +12,12 @@
 import Testing
 @testable import Dictionary_Primitives
 
-// MARK: - Dictionary.Ordered.Inline Tests
+// MARK: - Dictionary.Ordered.Static Tests
 //
 // Note: Inline is unconditionally ~Copyable, so #expect cannot use direct
 // property access syntax. Extract values to local variables first.
 
-@Suite("Dictionary.Ordered.Inline")
+@Suite("Dictionary.Ordered.Static")
 struct DictionaryOrderedInlineTests {
     @Suite struct Unit {}
     @Suite struct EdgeCase {}

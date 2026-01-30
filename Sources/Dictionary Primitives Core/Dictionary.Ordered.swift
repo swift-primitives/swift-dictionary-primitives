@@ -241,17 +241,17 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
         /// A fixed-capacity, inline-storage ordered dictionary with compile-time capacity.
         ///
-        /// `Dictionary.Ordered.Inline` stores elements directly within the struct's memory layout,
+        /// `Dictionary.Ordered.Static` stores elements directly within the struct's memory layout,
         /// requiring no heap allocation. The capacity is specified as a compile-time
         /// generic parameter.
         ///
         /// - Note: This type is declared inside `Ordered` (not in an extension) due to a
         ///   Swift compiler bug where nested types with value generic parameters declared
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-        public struct Inline<let capacity: Int>: ~Copyable {
-            /// Value storage using Storage.Inline from storage-primitives.
+        public struct Static<let capacity: Int>: ~Copyable {
+            /// Value storage using Storage.Static from storage-primitives.
             @usableFromInline
-            var _values: Storage<Value>.Inline<capacity>
+            var _values: Storage<Value>.Static<capacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -276,7 +276,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @inlinable
             public init() {
                 do {
-                    self._values = try Storage<Value>.Inline<capacity>()
+                    self._values = try Storage<Value>.Static<capacity>()
                 } catch {
                     switch error {
                     case .strideExceedsSlotSize(let stride, let max):
@@ -326,9 +326,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         @safe
         public struct Small<let inlineCapacity: Int>: ~Copyable {
-            /// Inline value storage using Storage.Inline from storage-primitives.
+            /// Inline value storage using Storage.Static from storage-primitives.
             @usableFromInline
-            var _inlineValueStorage: Storage<Value>.Inline<inlineCapacity>
+            var _inlineValues: Storage<Value>.Static<inlineCapacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -358,7 +358,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @inlinable
             public init() {
                 do {
-                    self._inlineValueStorage = try Storage<Value>.Inline<inlineCapacity>()
+                    self._inlineValues = try Storage<Value>.Static<inlineCapacity>()
                 } catch {
                     switch error {
                     case .strideExceedsSlotSize(let stride, let max):
@@ -384,8 +384,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                     // Set count for proper cleanup
                     _heapValues!.count = Index_Primitives.Index<Value>.Count(UInt(count))
                 } else {
-                    // Elements are inline - use Storage.Inline's deinitialize
-                    _inlineValueStorage.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(count)))
+                    // Elements are inline - use Storage.Static's deinitialize
+                    _inlineValues.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(count)))
                 }
             }
 
@@ -412,8 +412,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                     }
                 }
 
-                // Move values from inline to heap using Storage.Inline's move(to:count:)
-                _inlineValueStorage.move(to: newValues, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+                // Move values from inline to heap using Storage.Static's move(to:count:)
+                _inlineValues.move(to: newValues, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
                 newValues.count = Index_Primitives.Index<Value>.Count(UInt(_count))
 
                 _heapKeys = heapKeys
@@ -441,13 +441,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Copyable where 
 /// ~Copyable value support for the drain operation.
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Entry: Copyable where Value: Copyable {}
 
-// Note: Dictionary.Ordered.Small and Dictionary.Ordered.Inline are UNCONDITIONALLY ~Copyable due to deinit requirement
+// Note: Dictionary.Ordered.Small and Dictionary.Ordered.Static are UNCONDITIONALLY ~Copyable due to deinit requirement
 
 // MARK: - Sendable
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Static: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Small: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 
 // MARK: - Swift.Sequence/Collection Conformances

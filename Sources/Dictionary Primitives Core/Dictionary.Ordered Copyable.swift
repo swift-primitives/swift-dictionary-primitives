@@ -279,7 +279,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Hashable where 
 
 // MARK: - Inline Variant (Copyable)
 
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: Copyable {
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copyable {
     /// Accesses the value for the given key.
     @inlinable
     public subscript(key: Key) -> Value? {
@@ -313,7 +313,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
             }
             guard let index = _inlineIndex(of: key) else { return nil }
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            return _inlineValueStorage.withElement(at: valueIndex) { $0 }
+            return _inlineValues.withElement(at: valueIndex) { $0 }
         }
     }
 
@@ -326,6 +326,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
             return (heapKeys[keyIndex], unsafe _heapValuePtr![index])
         }
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return (_inlineKeys[index]!, _inlineValueStorage.withElement(at: valueIndex) { $0 })
+        return (_inlineKeys[index]!, _inlineValues.withElement(at: valueIndex) { $0 })
     }
 }
