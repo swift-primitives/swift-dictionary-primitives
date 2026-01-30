@@ -389,12 +389,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Cop
         let valueIndex = Index<Value>(Ordinal(UInt(index)))
         let value = _valueStorage.move(at: valueIndex)
 
-        // Shift keys and values left (manual - Storage.Inline lacks shiftLeft)
+        // Shift values left using Storage.Inline's shift API
+        _valueStorage.shift.left(removedAt: valueIndex, count: Index<Value>.Count(UInt(_count)))
+
+        // Shift keys left
         for i in index..<(_count - 1) {
             _keys[i] = _keys[i + 1]
-            let srcIndex = Index<Value>(Ordinal(UInt(i + 1)))
-            let dstIndex = Index<Value>(Ordinal(UInt(i)))
-            _valueStorage.initialize(to: _valueStorage.move(at: srcIndex), at: dstIndex)
         }
         _keys[_count - 1] = nil
         _count -= 1
@@ -548,12 +548,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
             let value = _inlineValueStorage.move(at: valueIndex)
 
-            // Shift keys and values left (manual - Storage.Inline lacks shiftLeft)
+            // Shift values left using Storage.Inline's shift API
+            _inlineValueStorage.shift.left(removedAt: valueIndex, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+
+            // Shift keys left
             for i in index..<(_count - 1) {
                 _inlineKeys[i] = _inlineKeys[i + 1]
-                let srcIndex = Index_Primitives.Index<Value>(Ordinal(UInt(i + 1)))
-                let dstIndex = Index_Primitives.Index<Value>(Ordinal(UInt(i)))
-                _inlineValueStorage.initialize(to: _inlineValueStorage.move(at: srcIndex), at: dstIndex)
             }
             _inlineKeys[_count - 1] = nil
             _count -= 1
