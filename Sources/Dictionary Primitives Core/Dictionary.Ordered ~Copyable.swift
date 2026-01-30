@@ -361,18 +361,18 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Cop
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) throws(Error) {
         if let existingIndex = index(of: key) {
-            // Update existing
-            let ptr = unsafe _pointerToValue(at: existingIndex)
-            unsafe ptr.deinitialize(count: 1)
-            unsafe ptr.initialize(to: value)
+            // Update existing - move old value out, initialize with new
+            let valueIndex = Index<Value>(Ordinal(UInt(existingIndex)))
+            _ = _valueStorage.move(at: valueIndex)
+            _valueStorage.initialize(to: value, at: valueIndex)
         } else {
             guard _count < capacity else {
                 throw .overflow
             }
             // Insert new
             _keys[_count] = key
-            let ptr = unsafe _pointerToValue(at: _count)
-            unsafe ptr.initialize(to: value)
+            let valueIndex = Index<Value>(Ordinal(UInt(_count)))
+            _valueStorage.initialize(to: value, at: valueIndex)
             _count += 1
         }
     }
@@ -386,15 +386,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Cop
     public mutating func remove(_ key: Key) -> Value? {
         guard let index = index(of: key) else { return nil }
 
-        let ptr = unsafe _pointerToValue(at: index)
-        let value = unsafe ptr.move()
+        let valueIndex = Index<Value>(Ordinal(UInt(index)))
+        let value = _valueStorage.move(at: valueIndex)
 
-        // Shift keys and values left
+        // Shift keys and values left (manual - Storage.Inline lacks shiftLeft)
         for i in index..<(_count - 1) {
             _keys[i] = _keys[i + 1]
-            let srcPtr = unsafe _pointerToValue(at: i + 1)
-            let dstPtr = unsafe _pointerToValue(at: i)
-            unsafe dstPtr.initialize(to: srcPtr.move())
+            let srcIndex = Index<Value>(Ordinal(UInt(i + 1)))
+            let dstIndex = Index<Value>(Ordinal(UInt(i)))
+            _valueStorage.initialize(to: _valueStorage.move(at: srcIndex), at: dstIndex)
         }
         _keys[_count - 1] = nil
         _count -= 1
@@ -405,9 +405,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Cop
     /// Removes all key-value pairs.
     @inlinable
     public mutating func clear() {
+        if _count > 0 {
+            _valueStorage.deinitialize(count: Index<Value>.Count(UInt(_count)))
+        }
         for i in 0..<_count {
-            let ptr = unsafe _pointerToValue(at: i)
-            unsafe ptr.deinitialize(count: 1)
             _keys[i] = nil
         }
         _count = 0
@@ -417,14 +418,16 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: ~Cop
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
         guard let index = index(of: key) else { return nil }
-        return body(unsafe _readPointerToValue(at: index).pointee)
+        let valueIndex = Index<Value>(Ordinal(UInt(index)))
+        return _valueStorage.withElement(at: valueIndex, body)
     }
 
     /// Accesses the value at the given index via closure (for ~Copyable values).
     @inlinable
     public func withValue<R>(atIndex index: Int, _ body: (borrowing Value) -> R) -> R {
         precondition(index >= 0 && index < count, "Index out of bounds")
-        return body(unsafe _readPointerToValue(at: index).pointee)
+        let valueIndex = Index<Value>(Ordinal(UInt(index)))
+        return _valueStorage.withElement(at: valueIndex, body)
     }
 }
 
@@ -499,14 +502,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         } else {
             // Inline mode
             if let existingIndex = _inlineIndex(of: key) {
-                let ptr = unsafe _inlinePointerToValue(at: existingIndex)
-                unsafe ptr.deinitialize(count: 1)
-                unsafe ptr.initialize(to: value)
+                // Update existing - move old value out, initialize with new
+                let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(existingIndex)))
+                _ = _inlineValueStorage.move(at: valueIndex)
+                _inlineValueStorage.initialize(to: value, at: valueIndex)
             } else if _count < inlineCapacity {
                 // Still room in inline storage
                 _inlineKeys[_count] = key
-                let ptr = unsafe _inlinePointerToValue(at: _count)
-                unsafe ptr.initialize(to: value)
+                let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(_count)))
+                _inlineValueStorage.initialize(to: value, at: valueIndex)
                 _count += 1
             } else {
                 // Need to spill to heap
@@ -541,15 +545,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             // Inline mode
             guard let index = _inlineIndex(of: key) else { return nil }
 
-            let ptr = unsafe _inlinePointerToValue(at: index)
-            let value = unsafe ptr.move()
+            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+            let value = _inlineValueStorage.move(at: valueIndex)
 
-            // Shift keys and values left
+            // Shift keys and values left (manual - Storage.Inline lacks shiftLeft)
             for i in index..<(_count - 1) {
                 _inlineKeys[i] = _inlineKeys[i + 1]
-                let srcPtr = unsafe _inlinePointerToValue(at: i + 1)
-                let dstPtr = unsafe _inlinePointerToValue(at: i)
-                unsafe dstPtr.initialize(to: srcPtr.move())
+                let srcIndex = Index_Primitives.Index<Value>(Ordinal(UInt(i + 1)))
+                let dstIndex = Index_Primitives.Index<Value>(Ordinal(UInt(i)))
+                _inlineValueStorage.initialize(to: _inlineValueStorage.move(at: srcIndex), at: dstIndex)
             }
             _inlineKeys[_count - 1] = nil
             _count -= 1
@@ -565,9 +569,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             _heapKeys!.clear(keepingCapacity: true)
             heapValues.deinitialize()
         } else {
+            if _count > 0 {
+                _inlineValueStorage.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+            }
             for i in 0..<_count {
-                let ptr = unsafe _inlinePointerToValue(at: i)
-                unsafe ptr.deinitialize(count: 1)
                 _inlineKeys[i] = nil
             }
         }
@@ -583,7 +588,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             return body(unsafe _heapValuePtr![pos])
         }
         guard let index = _inlineIndex(of: key) else { return nil }
-        return body(unsafe _inlineReadPointerToValue(at: index).pointee)
+        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+        return _inlineValueStorage.withElement(at: valueIndex, body)
     }
 
     /// Accesses the value at the given index via closure (for ~Copyable values).
@@ -593,7 +599,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         if let _ = _heapValues {
             return body(unsafe _heapValuePtr![index])
         }
-        return body(unsafe _inlineReadPointerToValue(at: index).pointee)
+        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+        return _inlineValueStorage.withElement(at: valueIndex, body)
     }
 }
 

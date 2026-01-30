@@ -285,7 +285,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: Copy
     public subscript(key: Key) -> Value? {
         get {
             guard let index = index(of: key) else { return nil }
-            return unsafe _readPointerToValue(at: index).pointee
+            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+            return _valueStorage.withElement(at: valueIndex) { $0 }
         }
     }
 
@@ -293,7 +294,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Inline where Value: Copy
     @inlinable
     public subscript(index index: Int) -> (key: Key, value: Value) {
         precondition(index >= 0 && index < count, "Index out of bounds")
-        return (_keys[index]!, unsafe _readPointerToValue(at: index).pointee)
+        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+        return (_keys[index]!, _valueStorage.withElement(at: valueIndex) { $0 })
     }
 }
 
@@ -310,7 +312,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
                 return unsafe _heapValuePtr![pos]
             }
             guard let index = _inlineIndex(of: key) else { return nil }
-            return unsafe _inlineReadPointerToValue(at: index).pointee
+            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+            return _inlineValueStorage.withElement(at: valueIndex) { $0 }
         }
     }
 
@@ -322,6 +325,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
             let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
             return (heapKeys[keyIndex], unsafe _heapValuePtr![index])
         }
-        return (_inlineKeys[index]!, unsafe _inlineReadPointerToValue(at: index).pointee)
+        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+        return (_inlineKeys[index]!, _inlineValueStorage.withElement(at: valueIndex) { $0 })
     }
 }

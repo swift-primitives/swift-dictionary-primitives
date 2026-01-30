@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Set_Primitives
+public import Storage_Primitives
+public import Index_Primitives
 
 // ===----------------------------------------------------------------------===//
 // MARK: - Semantic Invariants
@@ -247,13 +249,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   Swift compiler bug where nested types with value generic parameters declared
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         public struct Inline<let capacity: Int>: ~Copyable {
-            /// Maximum value stride supported by inline storage (64 bytes per slot).
+            /// Value storage using Storage.Inline from storage-primitives.
             @usableFromInline
-            static var _maxValueStride: Int { 64 }
-
-            /// Raw byte storage for values. Each slot is 64 bytes (8 Ints on 64-bit).
-            @usableFromInline
-            var _values: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+            var _valueStorage: Storage<Value>.Inline<capacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -277,59 +275,24 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             /// Creates an empty inline ordered dictionary.
             @inlinable
             public init() {
-                precondition(
-                    MemoryLayout<Value>.stride <= Self._maxValueStride,
-                    "Value stride (\(MemoryLayout<Value>.stride)) exceeds inline storage slot size (\(Self._maxValueStride) bytes). Use Dictionary.Ordered.Bounded instead."
-                )
-                precondition(
-                    MemoryLayout<Value>.alignment <= MemoryLayout<Int>.alignment,
-                    "Value alignment (\(MemoryLayout<Value>.alignment)) exceeds inline storage alignment (\(MemoryLayout<Int>.alignment)). Use Dictionary.Ordered.Bounded instead."
-                )
-                self._values = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
+                do {
+                    self._valueStorage = try Storage<Value>.Inline<capacity>()
+                } catch {
+                    switch error {
+                    case .strideExceedsSlotSize(let stride, let max):
+                        preconditionFailure("Value stride (\(stride)) exceeds inline storage slot size (\(max) bytes). Use Dictionary.Ordered.Bounded instead.")
+                    case .alignmentExceedsStorageAlignment(let alignment, let max):
+                        preconditionFailure("Value alignment (\(alignment)) exceeds inline storage alignment (\(max)). Use Dictionary.Ordered.Bounded instead.")
+                    }
+                }
                 self._keys = InlineArray(repeating: nil)
                 self._hashTable = InlineArray(repeating: -1)
                 self._count = 0
             }
 
             deinit {
-                let count = _count
-                guard count > 0 else { return }
-
-                let stride = MemoryLayout<Value>.stride
-                unsafe Swift.withUnsafeBytes(of: _values) { bytes in
-                    let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                    for i in 0..<count {
-                        let valuePtr = unsafe (basePtr + i * stride)
-                            .assumingMemoryBound(to: Value.self)
-                        unsafe valuePtr.deinitialize(count: 1)
-                    }
-                }
-            }
-
-            /// Returns a mutable pointer to the value at the given index.
-            @usableFromInline
-            @unsafe
-            mutating func _pointerToValue(at index: Int) -> UnsafeMutablePointer<Value> {
-                let stride = MemoryLayout<Value>.stride
-                return unsafe Swift.withUnsafeMutablePointer(to: &_values) { storagePtr in
-                    let basePtr = UnsafeMutableRawPointer(storagePtr)
-                    let valuePtr = unsafe (basePtr + index * stride)
-                        .assumingMemoryBound(to: Value.self)
-                    return unsafe valuePtr
-                }
-            }
-
-            /// Returns a read-only pointer to the value at the given index.
-            @usableFromInline
-            @unsafe
-            func _readPointerToValue(at index: Int) -> UnsafePointer<Value> {
-                let stride = MemoryLayout<Value>.stride
-                return unsafe Swift.withUnsafePointer(to: _values) { storagePtr in
-                    let basePtr = unsafe UnsafeRawPointer(storagePtr)
-                    let valuePtr = unsafe (basePtr + index * stride)
-                        .assumingMemoryBound(to: Value.self)
-                    return unsafe valuePtr
-                }
+                guard _count > 0 else { return }
+                _valueStorage.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
             }
         }
 
@@ -363,13 +326,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         @safe
         public struct Small<let inlineCapacity: Int>: ~Copyable {
-            /// Maximum value stride supported by inline storage (64 bytes per slot).
+            /// Inline value storage using Storage.Inline from storage-primitives.
             @usableFromInline
-            static var _maxValueStride: Int { 64 }
-
-            /// Raw byte storage for inline values.
-            @usableFromInline
-            var _inlineValues: InlineArray<inlineCapacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+            var _inlineValueStorage: Storage<Value>.Inline<inlineCapacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -398,15 +357,16 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             /// Creates an empty small ordered dictionary.
             @inlinable
             public init() {
-                precondition(
-                    MemoryLayout<Value>.stride <= Self._maxValueStride,
-                    "Value stride (\(MemoryLayout<Value>.stride)) exceeds inline storage slot size (\(Self._maxValueStride) bytes). Use Dictionary.Ordered.Bounded instead."
-                )
-                precondition(
-                    MemoryLayout<Value>.alignment <= MemoryLayout<Int>.alignment,
-                    "Value alignment (\(MemoryLayout<Value>.alignment)) exceeds inline storage alignment (\(MemoryLayout<Int>.alignment)). Use Dictionary.Ordered.Bounded instead."
-                )
-                self._inlineValues = InlineArray(repeating: (0, 0, 0, 0, 0, 0, 0, 0))
+                do {
+                    self._inlineValueStorage = try Storage<Value>.Inline<inlineCapacity>()
+                } catch {
+                    switch error {
+                    case .strideExceedsSlotSize(let stride, let max):
+                        preconditionFailure("Value stride (\(stride)) exceeds inline storage slot size (\(max) bytes). Use Dictionary.Ordered.Bounded instead.")
+                    case .alignmentExceedsStorageAlignment(let alignment, let max):
+                        preconditionFailure("Value alignment (\(alignment)) exceeds inline storage alignment (\(max)). Use Dictionary.Ordered.Bounded instead.")
+                    }
+                }
                 self._inlineKeys = InlineArray(repeating: nil)
                 self._inlineHashTable = InlineArray(repeating: -1)
                 self._count = 0
@@ -424,50 +384,14 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                     // Set count for proper cleanup
                     _heapValues!.count = Index_Primitives.Index<Value>.Count(UInt(count))
                 } else {
-                    // Elements are inline - clean up manually
-                    let stride = MemoryLayout<Value>.stride
-                    unsafe Swift.withUnsafeBytes(of: _inlineValues) { bytes in
-                        let basePtr = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                        for i in 0..<count {
-                            let valuePtr = unsafe (basePtr + i * stride)
-                                .assumingMemoryBound(to: Value.self)
-                            unsafe valuePtr.deinitialize(count: 1)
-                        }
-                    }
+                    // Elements are inline - use Storage.Inline's deinitialize
+                    _inlineValueStorage.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(count)))
                 }
             }
 
             /// Whether the dictionary is currently using heap storage.
             @inlinable
             public var isSpilled: Bool { _heapKeys != nil }
-
-            // MARK: - Internal Helpers
-
-            /// Returns a mutable pointer to the inline value at the given index.
-            @usableFromInline
-            @unsafe
-            mutating func _inlinePointerToValue(at index: Int) -> UnsafeMutablePointer<Value> {
-                let stride = MemoryLayout<Value>.stride
-                return unsafe Swift.withUnsafeMutablePointer(to: &_inlineValues) { storagePtr in
-                    let basePtr = UnsafeMutableRawPointer(storagePtr)
-                    let valuePtr = unsafe (basePtr + index * stride)
-                        .assumingMemoryBound(to: Value.self)
-                    return unsafe valuePtr
-                }
-            }
-
-            /// Returns a read-only pointer to the inline value at the given index.
-            @usableFromInline
-            @unsafe
-            func _inlineReadPointerToValue(at index: Int) -> UnsafePointer<Value> {
-                let stride = MemoryLayout<Value>.stride
-                return unsafe Swift.withUnsafePointer(to: _inlineValues) { storagePtr in
-                    let basePtr = unsafe UnsafeRawPointer(storagePtr)
-                    let valuePtr = unsafe (basePtr + index * stride)
-                        .assumingMemoryBound(to: Value.self)
-                    return unsafe valuePtr
-                }
-            }
 
             /// Spills inline storage to heap.
             @usableFromInline
@@ -488,18 +412,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                     }
                 }
 
-                // Move values from inline to heap
-                let stride = MemoryLayout<Value>.stride
-                _ = unsafe Swift.withUnsafeBytes(of: _inlineValues) { bytes in
-                    unsafe newValues.withUnsafeMutablePointerToElements { heapPtr in
-                        let inlineBase = unsafe UnsafeMutableRawPointer(mutating: bytes.baseAddress!)
-                        for i in 0..<_count {
-                            let inlineValue = unsafe (inlineBase + i * stride)
-                                .assumingMemoryBound(to: Value.self)
-                            unsafe (heapPtr + i).initialize(to: inlineValue.move())
-                        }
-                    }
-                }
+                // Move values from inline to heap using Storage.Inline's move(to:count:)
+                _inlineValueStorage.move(to: newValues, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
                 newValues.count = Index_Primitives.Index<Value>.Count(UInt(_count))
 
                 _heapKeys = heapKeys
