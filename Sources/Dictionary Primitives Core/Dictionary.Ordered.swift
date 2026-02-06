@@ -249,7 +249,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   Swift compiler bug where nested types with value generic parameters declared
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         public struct Static<let capacity: Int>: ~Copyable {
-            /// Value storage using Storage.Static from storage-primitives.
+            /// Value storage using Storage.Inline from storage-primitives.
             @usableFromInline
             var _values: Storage<Value>.Static<capacity>
 
@@ -326,7 +326,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         @safe
         public struct Small<let inlineCapacity: Int>: ~Copyable {
-            /// Inline value storage using Storage.Static from storage-primitives.
+            /// Inline value storage using Storage.Inline from storage-primitives.
             @usableFromInline
             var _inlineValues: Storage<Value>.Static<inlineCapacity>
 
@@ -384,7 +384,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                     // Set count for proper cleanup
                     _heapValues!.count = Index_Primitives.Index<Value>.Count(UInt(count))
                 } else {
-                    // Elements are inline - use Storage.Static's deinitialize
+                    // Elements are inline - use Storage.Inline's deinitialize
                     _inlineValues.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(count)))
                 }
             }
@@ -412,7 +412,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                     }
                 }
 
-                // Move values from inline to heap using Storage.Static's move(to:count:)
+                // Move values from inline to heap using Storage.Inline's move(to:count:)
                 _inlineValues.move(to: newValues, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
                 newValues.count = Index_Primitives.Index<Value>.Count(UInt(_count))
 

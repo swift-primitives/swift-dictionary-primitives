@@ -389,7 +389,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         let valueIndex = Index<Value>(Ordinal(UInt(index)))
         let value = _values.move(at: valueIndex)
 
-        // Shift values left using Storage.Static's shift API
+        // Shift values left using Storage.Inline's shift API
         _values.shift.left(removedAt: valueIndex, count: Index<Value>.Count(UInt(_count)))
 
         // Shift keys left
@@ -548,7 +548,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
             let value = _inlineValues.move(at: valueIndex)
 
-            // Shift values left using Storage.Static's shift API
+            // Shift values left using Storage.Inline's shift API
             _inlineValues.shift.left(removedAt: valueIndex, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
 
             // Shift keys left
