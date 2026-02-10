@@ -100,8 +100,23 @@ public enum __DictionaryOrderedInlineError<Key: Hash.`Protocol`>: Swift.Error {
     /// The dictionary is full and cannot accept more pairs.
     case overflow
 
+    /// An index was out of bounds.
+    case bounds(Bounds)
+
     /// A duplicate key was detected.
     case duplicate(key: Key, first: Index_Primitives.Index<Key>, second: Index_Primitives.Index<Key>.Count)
+
+    /// Bounds violation payload.
+    public struct Bounds: Sendable, Equatable {
+        public let index: Index_Primitives.Index<Key>
+        public let count: Index_Primitives.Index<Key>.Count
+
+        @inlinable
+        public init(index: Index_Primitives.Index<Key>, count: Index_Primitives.Index<Key>.Count) {
+            self.index = index
+            self.count = count
+        }
+    }
 }
 
 // MARK: - Sendable
@@ -155,6 +170,8 @@ extension __DictionaryOrderedInlineError: CustomStringConvertible {
         switch self {
         case .overflow:
             return "inline dictionary is full"
+        case .bounds(let e):
+            return "index \(Int(bitPattern: e.index)) out of bounds for count \(Int(bitPattern: e.count))"
         case .duplicate(let key, let first, let second):
             return "duplicate key '\(key)' at indices \(Int(bitPattern: first)) and \(Int(bitPattern: second))"
         }

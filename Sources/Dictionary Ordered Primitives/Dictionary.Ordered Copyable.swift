@@ -76,6 +76,23 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Sequence.`Protocol` whe
 /// because it implicitly requires Element: Copyable.
 extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.Sequence where Value: Copyable {}
 
+// MARK: - Typed Element Access (Copyable)
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
+    /// Returns the key-value pair at the typed index, with typed error on bounds failure.
+    ///
+    /// - Parameter index: The typed index of the pair to access.
+    /// - Returns: The key-value pair at the index.
+    /// - Throws: ``Dictionary/Ordered/Error/bounds(_:)`` if the index is out of bounds.
+    @inlinable
+    public func element(at index: Index_Primitives.Index<Key>) throws(__DictionaryOrderedError<Key>) -> (key: Key, value: Value) {
+        guard index < _keys.count else {
+            throw .bounds(.init(index: index, count: _keys.count))
+        }
+        return (key: _keys[index], value: _values._readValue(at: index))
+    }
+}
+
 // MARK: - Swift.Collection Conformance
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.Collection where Value: Copyable {

@@ -185,6 +185,22 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         let pos = Int(bitPattern: index)
         return body(unsafe _cachedValuePtr[pos])
     }
+
+    /// Accesses the value at the given index via closure, with typed error on bounds failure.
+    ///
+    /// - Parameters:
+    ///   - index: The typed index.
+    ///   - body: A closure that receives a borrowed reference to the value.
+    /// - Returns: The result of the closure.
+    /// - Throws: ``Dictionary/Ordered/Error/bounds(_:)`` if the index is out of bounds.
+    @inlinable
+    public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) throws(__DictionaryOrderedError<Key>) -> R) throws(__DictionaryOrderedError<Key>) -> R {
+        guard index < _keys.count else {
+            throw .bounds(.init(index: index, count: _keys.count))
+        }
+        let pos = Int(bitPattern: index)
+        return try body(unsafe _cachedValuePtr[pos])
+    }
 }
 
 // MARK: - forEach (~Copyable)
@@ -313,6 +329,16 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
         let pos = Int(bitPattern: index)
         return body(unsafe _cachedValuePtr[pos])
     }
+
+    /// Accesses the value at the given typed index via closure, with typed error on bounds failure.
+    @inlinable
+    public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) throws(__DictionaryOrderedBoundedError<Key>) -> R) throws(__DictionaryOrderedBoundedError<Key>) -> R {
+        guard index < count else {
+            throw .bounds(index: index, count: count)
+        }
+        let pos = Int(bitPattern: index)
+        return try body(unsafe _cachedValuePtr[pos])
+    }
 }
 
 // MARK: - Inline Variant (~Copyable)
@@ -428,6 +454,17 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         precondition(index >= 0 && index < count, "Index out of bounds")
         let valueIndex = Index<Value>(Ordinal(UInt(index)))
         return _values.withElement(at: valueIndex, body)
+    }
+
+    /// Accesses the value at the given typed index via closure, with typed error on bounds failure.
+    @inlinable
+    public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) throws(__DictionaryOrderedInlineError<Key>) -> R) throws(__DictionaryOrderedInlineError<Key>) -> R {
+        let pos = Int(bitPattern: index)
+        guard pos >= 0 && pos < count else {
+            throw .bounds(.init(index: index, count: Index_Primitives.Index<Key>.Count(UInt(count))))
+        }
+        let valueIndex = Index<Value>(Ordinal(UInt(pos)))
+        return try _values.withElement(at: valueIndex, body)
     }
 }
 
