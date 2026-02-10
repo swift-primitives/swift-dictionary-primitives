@@ -53,18 +53,18 @@ extension DictionaryOrderedInlineTests.Unit {
         var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         var isEmpty = dict.isEmpty
-        var count = dict.count
+        var count = Int(bitPattern: dict.count)
         #expect(isEmpty)
         #expect(count == 0)
 
         try! dict.set("a", 1)
         isEmpty = dict.isEmpty
-        count = dict.count
+        count = Int(bitPattern: dict.count)
         #expect(!isEmpty)
         #expect(count == 1)
 
         try! dict.set("b", 2)
-        count = dict.count
+        count = Int(bitPattern: dict.count)
         #expect(count == 2)
     }
 
@@ -84,7 +84,7 @@ extension DictionaryOrderedInlineTests.Unit {
         }
 
         // Count should remain 1
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         #expect(count == 1)
     }
 
@@ -108,10 +108,15 @@ extension DictionaryOrderedInlineTests.Unit {
         try! dict.set("second", 2)
         try! dict.set("third", 3)
 
-        #expect(dict.index(of: "first") == 0)
-        #expect(dict.index(of: "second") == 1)
-        #expect(dict.index(of: "third") == 2)
+        #expect(dict.index(of: "first") != nil)
+        #expect(dict.index(of: "second") != nil)
+        #expect(dict.index(of: "third") != nil)
         #expect(dict.index(of: "missing") == nil)
+
+        // Verify insertion order via subscript
+        #expect(dict[index: 0].key == "first")
+        #expect(dict[index: 1].key == "second")
+        #expect(dict[index: 2].key == "third")
     }
 
     @Test
@@ -125,16 +130,16 @@ extension DictionaryOrderedInlineTests.Unit {
 
         // Remove middle element
         let removed = dict.remove("b")
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         let hasB = dict.contains("b")
         #expect(removed == 2)
         #expect(count == 3)
         #expect(!hasB)
 
-        // Indices should have shifted
-        #expect(dict.index(of: "a") == 0)
-        #expect(dict.index(of: "c") == 1)
-        #expect(dict.index(of: "d") == 2)
+        // Indices should have shifted — verify via subscript
+        #expect(dict[index: 0].key == "a")
+        #expect(dict[index: 1].key == "c")
+        #expect(dict[index: 2].key == "d")
     }
 
     @Test
@@ -146,11 +151,11 @@ extension DictionaryOrderedInlineTests.Unit {
         try! dict.set("c", 3)
 
         let removed = dict.remove("a")
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         #expect(removed == 1)
         #expect(count == 2)
-        #expect(dict.index(of: "b") == 0)
-        #expect(dict.index(of: "c") == 1)
+        #expect(dict[index: 0].key == "b")
+        #expect(dict[index: 1].key == "c")
     }
 
     @Test
@@ -162,11 +167,11 @@ extension DictionaryOrderedInlineTests.Unit {
         try! dict.set("c", 3)
 
         let removed = dict.remove("c")
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         #expect(removed == 3)
         #expect(count == 2)
-        #expect(dict.index(of: "a") == 0)
-        #expect(dict.index(of: "b") == 1)
+        #expect(dict[index: 0].key == "a")
+        #expect(dict[index: 1].key == "b")
     }
 
     @Test
@@ -176,7 +181,7 @@ extension DictionaryOrderedInlineTests.Unit {
         try! dict.set("a", 1)
 
         let removed = dict.remove("missing")
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         #expect(removed == nil)
         #expect(count == 1)
     }
@@ -192,10 +197,11 @@ extension DictionaryOrderedInlineTests.Unit {
         dict.clear()
 
         let isEmpty = dict.isEmpty
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         let hasA = dict.contains("a")
         #expect(isEmpty)
         #expect(count == 0)
+
         #expect(!hasA)
     }
 
@@ -270,7 +276,7 @@ extension DictionaryOrderedInlineTests.EdgeCase {
         var dict = Dictionary<String, Int>.Ordered.Static<1>()
 
         try! dict.set("only", 42)
-        var count = dict.count
+        var count = Int(bitPattern: dict.count)
         var isFull = dict.isFull
         #expect(count == 1)
         #expect(isFull)
@@ -287,7 +293,7 @@ extension DictionaryOrderedInlineTests.EdgeCase {
 
     @Test
     func `Reinsert after remove`() {
-        var dict = Dictionary<String, Int>.Ordered.Static<3>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -295,9 +301,9 @@ extension DictionaryOrderedInlineTests.EdgeCase {
         dict.remove("a")
         try! dict.set("a", 100)
 
-        // 'a' should be at the end now
-        #expect(dict.index(of: "b") == 0)
-        #expect(dict.index(of: "a") == 1)
+        // 'a' should be at the end now — verify via subscript
+        #expect(dict[index: 0].key == "b")
+        #expect(dict[index: 1].key == "a")
         dict.withValue(forKey: "a") { value in
             #expect(value == 100)
         }
@@ -308,7 +314,7 @@ extension DictionaryOrderedInlineTests.EdgeCase {
         var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         let isEmpty = dict.isEmpty
-        let count = dict.count
+        let count = Int(bitPattern: dict.count)
         let hasAny = dict.contains("any")
         let indexAny = dict.index(of: "any")
         let removeAny = dict.remove("any")

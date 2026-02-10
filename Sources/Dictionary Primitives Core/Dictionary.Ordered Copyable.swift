@@ -268,18 +268,20 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
     @inlinable
     public subscript(key: Key) -> Value? {
         get {
-            guard let index = index(of: key) else { return nil }
-            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            return _values[valueIndex]
+            let hashValue = key.hashValue
+            guard let position = _hashTable.position(forHash: hashValue, equals: { idx in
+                _keys[idx] == key
+            }) else { return nil }
+            return _values[Index_Primitives.Index<Key>(position).retag(Value.self)]
         }
     }
 
     /// Accesses the key-value pair at the given index.
     @inlinable
     public subscript(index index: Int) -> (key: Key, value: Value) {
-        precondition(index >= 0 && index < count, "Index out of bounds")
-        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return (_keys[index]!, _values[valueIndex])
+        precondition(index >= 0 && index < Int(bitPattern: _keys.count), "Index out of bounds")
+        let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
+        return (_keys[keyIndex], _values[keyIndex.retag(Value.self)])
     }
 }
 
@@ -295,8 +297,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
                 return _values[keyIndex.retag(Value.self)]
             }
             guard let index = _inlineIndex(of: key) else { return nil }
-            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            return _values[valueIndex]
+            return _values[index.retag(Value.self)]
         }
     }
 
@@ -309,6 +310,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
             let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
             return (heapKeys[keyIndex], _values[valueIndex])
         }
-        return (_inlineKeys[index]!, _values[valueIndex])
+        let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
+        return (_inlineKeys[keyIndex], _values[valueIndex])
     }
 }

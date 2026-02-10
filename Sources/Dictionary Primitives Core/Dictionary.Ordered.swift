@@ -12,6 +12,7 @@
 public import Set_Primitives
 public import Buffer_Linear_Primitives
 public import Index_Primitives
+public import Hash_Table_Primitives
 
 // ===----------------------------------------------------------------------===//
 // MARK: - Semantic Invariants
@@ -243,39 +244,27 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _values: Buffer<Value>.Linear.Inline<capacity>
 
-            /// Keys stored inline.
+            /// Dense key storage using Buffer.Linear.Inline.
             @usableFromInline
-            var _keys: InlineArray<capacity, Key?>
+            var _keys: Buffer<Key>.Linear.Inline<capacity>
 
-            /// Hash table for O(1) key lookup (maps hash bucket to key index, -1 for empty).
+            /// Hash table for O(1) key lookup via open-addressed linear probing.
+            /// Capacity must be a power of two.
             @usableFromInline
-            var _hashTable: InlineArray<capacity, Int>
-
-            // WORKAROUND: _count stored as raw Int, not Index<Key>.Count
-            // WHY: Key storage still uses InlineArray<capacity, Key?> which indexes by Int
-            // WHEN TO REMOVE: Key storage migration to Buffer<Key>.Linear.Inline + Hash.Table<Key>.Static
-            @usableFromInline
-            var _count: Int
-
-            /// Workaround for Swift compiler bug where deinit element cleanup
-            /// fails for ~Copyable structs that contain only value-type properties.
-            /// Adding a reference type property (`AnyObject?`) fixes the bug.
-            /// See: https://github.com/swiftlang/swift/issues/86652
-            @usableFromInline
-            var _deinitWorkaround: AnyObject? = nil
+            var _hashTable: Hash.Table<Key>.Static<capacity>
 
             /// Creates an empty inline ordered dictionary.
+            /// - Note: `capacity` must be a power of two (hash table requirement).
             @inlinable
             public init() {
                 self._values = Buffer<Value>.Linear.Inline<capacity>()
-                self._keys = InlineArray(repeating: nil)
-                self._hashTable = InlineArray(repeating: -1)
-                self._count = 0
+                self._keys = Buffer<Key>.Linear.Inline<capacity>()
+                self._hashTable = Hash.Table<Key>.Static<capacity>()
             }
 
-            deinit {
-                // Buffer.Linear.Inline handles element cleanup via Storage.Inline's deinit.
-            }
+            // No deinit needed — Storage.Inline's deinit handles element cleanup
+            // via per-slot bit-vector tracking. This type is already unconditionally
+            // ~Copyable because it contains @_rawLayout storage.
         }
 
         // MARK: - Small Variant
@@ -312,17 +301,12 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _values: Buffer<Value>.Linear.Small<inlineCapacity>
 
-            /// Keys stored inline.
+            /// Dense key storage for inline mode.
             @usableFromInline
-            var _inlineKeys: InlineArray<inlineCapacity, Key?>
+            var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
 
-            /// Hash table for inline mode.
-            @usableFromInline
-            var _inlineHashTable: InlineArray<inlineCapacity, Int>
-
-            // WORKAROUND: _count stored as raw Int, not Index<Key>.Count
-            // WHY: Key storage still uses InlineArray<inlineCapacity, Key?> which indexes by Int
-            // WHEN TO REMOVE: Key storage migration to Buffer<Key>.Linear.Inline + Hash.Table<Key>.Static
+            // WORKAROUND: _count stored as raw Int
+            // WHY: Tracks count across inline/heap modes. Conscious debt per [PATTERN-016].
             @usableFromInline
             var _count: Int
 
@@ -334,15 +318,14 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @inlinable
             public init() {
                 self._values = Buffer<Value>.Linear.Small<inlineCapacity>()
-                self._inlineKeys = InlineArray(repeating: nil)
-                self._inlineHashTable = InlineArray(repeating: -1)
+                self._inlineKeys = Buffer<Key>.Linear.Inline<inlineCapacity>()
                 self._count = 0
                 self._heapKeys = nil
             }
 
-            deinit {
-                // Buffer.Linear.Small handles cleanup for both inline and heap modes.
-            }
+            // No deinit needed — Buffer.Linear.Small handles cleanup for both
+            // inline and heap modes. This type is already unconditionally ~Copyable
+            // because it contains @_rawLayout storage.
 
             /// Whether the dictionary is currently using heap storage.
             @inlinable
@@ -354,13 +337,14 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                 precondition(_heapKeys == nil, "Already spilled")
 
                 var heapKeys = Set<Key>.Ordered()
-                for i in 0..<_count {
-                    if let key = _inlineKeys[i] {
-                        heapKeys.insert(key)
-                    }
+                var idx: Index_Primitives.Index<Key> = .zero
+                let end = _inlineKeys.count.map(Ordinal.init)
+                while idx < end {
+                    heapKeys.insert(_inlineKeys[idx])
+                    idx += .one
                 }
-
                 _heapKeys = heapKeys
+                _inlineKeys.removeAll()
             }
         }
     }
