@@ -96,11 +96,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     @discardableResult
     public mutating func modify(_ key: Key, _ transform: (inout Value) -> Void) -> Value? {
         guard let index = dict._keys.index(key) else { return nil }
-        // Read, modify, write back
-        var value = dict._values._readValue(at: index)
+        let valueIndex = index.retag(Value.self)
+        var value = dict._values[valueIndex]
         transform(&value)
-        _ = dict._values._moveValue(at: index)
-        dict._values._initializeValue(at: index, to: value)
+        _ = dict._values.replace(at: valueIndex, with: value)
         return value
     }
 
@@ -124,13 +123,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     public subscript(_ index: Index_Primitives.Index<Key>) -> Value {
         get {
             precondition(index < dict.count, "Index out of bounds")
-            return dict._values._readValue(at: index)
+            return dict._values[index.retag(Value.self)]
         }
         set {
             precondition(index < dict.count, "Index out of bounds")
             dict.makeUnique()
-            _ = dict._values._moveValue(at: index)
-            dict._values._initializeValue(at: index, to: newValue)
+            _ = dict._values.replace(at: index.retag(Value.self), with: newValue)
         }
     }
 
@@ -142,13 +140,14 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
     public subscript(raw index: Int) -> Value {
         get {
             precondition(index >= 0 && index < Int(bitPattern: dict.count), "Index out of bounds")
-            return dict._values._readValue(at: index)
+            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+            return dict._values[valueIndex]
         }
         set {
             precondition(index >= 0 && index < Int(bitPattern: dict.count), "Index out of bounds")
             dict.makeUnique()
-            _ = dict._values._moveValue(at: index)
-            dict._values._initializeValue(at: index, to: newValue)
+            let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
+            _ = dict._values.replace(at: valueIndex, with: newValue)
         }
     }
 
@@ -174,26 +173,26 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
     public struct Iterator: IteratorProtocol {
         @usableFromInline
-        let storage: Dictionary<Key, Value>.Ordered.ValueStorage
+        let _values: Buffer<Value>.Linear
 
         @usableFromInline
-        var index: Index_Primitives.Index<Key>
+        var _index: Index_Primitives.Index<Key>
 
         @usableFromInline
-        let count: Index_Primitives.Index<Key>.Count
+        let _count: Index_Primitives.Index<Key>.Count
 
         @usableFromInline
         init(_ dict: Dictionary<Key, Value>.Ordered) {
-            self.storage = dict._values
-            self.index = .zero
-            self.count = dict.count
+            self._values = dict._values
+            self._index = .zero
+            self._count = dict.count
         }
 
         @inlinable
         public mutating func next() -> Value? {
-            guard index < count else { return nil }
-            let value = storage._readValue(at: index)
-            index = index + .one
+            guard _index < _count else { return nil }
+            let value = _values[_index.retag(Value.self)]
+            _index = _index + .one
             return value
         }
     }

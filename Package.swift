@@ -26,6 +26,7 @@ let package = Package(
         .package(path: "../swift-input-primitives"),
         .package(path: "../swift-sequence-primitives"),
         .package(path: "../swift-property-primitives"),
+        .package(path: "../swift-buffer-primitives"),
     ],
     targets: [
         // Internal: Core types with ~Copyable support (no Sequence/Collection conformances)
@@ -37,6 +38,7 @@ let package = Package(
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
+                .product(name: "Buffer Linear Primitives", package: "swift-buffer-primitives"),
             ]
         ),
         // Variant: Swift.Sequence/Collection for Dictionary.Ordered (Value: Copyable)

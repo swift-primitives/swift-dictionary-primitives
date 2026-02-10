@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Set_Primitives
-public import Storage_Primitives
+public import Buffer_Linear_Primitives
 public import Index_Primitives
 
 // ===----------------------------------------------------------------------===//
@@ -159,29 +159,24 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
         // MARK: - Value Storage
         //
-        // Uses Storage<Value> from Storage Primitives for value storage.
-        // The Storage type supports ~Copyable elements natively.
+        // Uses Buffer<Value>.Linear from Buffer Linear Primitives for value storage.
+        // Buffer wraps Storage internally and provides the canonical data structure API.
 
         /// Typealias for value storage type.
-        public typealias ValueStorage = Storage<Value>
+        public typealias ValueStorage = Buffer<Value>.Linear
 
         public var _keys: Set<Key>.Ordered
 
-        public var _values: Storage<Value>
-
-        /// Cached pointer to value storage. Stored in struct to enable property-based access.
-        /// CRITICAL: Must be updated whenever _values is replaced (reallocation, CoW copy).
-        public var _cachedValuePtr: UnsafeMutablePointer<Value>
+        public var _values: Buffer<Value>.Linear
 
         /// Creates an empty ordered dictionary.
         @inlinable
         public init() {
             self._keys = Set<Key>.Ordered()
-            self._values = Storage<Value>.create(minimumCapacity: .zero)
-            unsafe (self._cachedValuePtr = _values.pointer(at: .zero).base)
+            self._values = Buffer<Value>.Linear(minimumCapacity: .zero)
         }
 
-        // Note: No deinit needed - ValueStorage handles cleanup
+        // Note: No deinit needed - Buffer.Linear handles cleanup
 
         // MARK: - Bounded Variant
 
@@ -212,10 +207,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         public struct Bounded: ~Copyable {
             public var _keys: Set<Key>.Ordered
 
-            public var _values: Storage<Value>
-
-            /// Cached pointer to value storage.
-            public var _cachedValuePtr: UnsafeMutablePointer<Value>
+            public var _values: Buffer<Value>.Linear.Bounded
 
             /// The maximum number of key-value pairs the dictionary can hold.
             public let capacity: Index_Primitives.Index<Key>.Count
@@ -228,13 +220,11 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             public init(capacity: Index_Primitives.Index<Key>.Count) throws(Dictionary.Ordered.Bounded.Error) {
                 self._keys = Set<Key>.Ordered()
                 self._keys.reserve(capacity)
-                let valueCapacity = capacity.retag(Value.self)
-                self._values = Storage<Value>.create(minimumCapacity: valueCapacity)
-                unsafe (self._cachedValuePtr = _values.pointer(at: .zero).base)
+                self._values = Buffer<Value>.Linear.Bounded(minimumCapacity: capacity.retag(Value.self))
                 self.capacity = capacity
             }
 
-            // Note: No deinit needed - Storage handles cleanup
+            // Note: No deinit needed - Buffer.Linear.Bounded handles cleanup
         }
 
         // MARK: - Inline Variant
@@ -249,9 +239,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   Swift compiler bug where nested types with value generic parameters declared
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         public struct Static<let capacity: Int>: ~Copyable {
-            /// Value storage using Storage.Inline from storage-primitives.
+            /// Value storage using Buffer.Linear.Inline from buffer-primitives.
             @usableFromInline
-            var _values: Storage<Value>.Static<capacity>
+            var _values: Buffer<Value>.Linear.Inline<capacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -261,7 +251,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _hashTable: InlineArray<capacity, Int>
 
-            /// Current element count.
+            // WORKAROUND: _count stored as raw Int, not Index<Key>.Count
+            // WHY: Key storage still uses InlineArray<capacity, Key?> which indexes by Int
+            // WHEN TO REMOVE: Key storage migration to Buffer<Key>.Linear.Inline + Hash.Table<Key>.Static
             @usableFromInline
             var _count: Int
 
@@ -275,24 +267,14 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             /// Creates an empty inline ordered dictionary.
             @inlinable
             public init() {
-                do {
-                    self._values = try Storage<Value>.Static<capacity>()
-                } catch {
-                    switch error {
-                    case .strideExceedsSlotSize(let stride, let max):
-                        preconditionFailure("Value stride (\(stride)) exceeds inline storage slot size (\(max) bytes). Use Dictionary.Ordered.Bounded instead.")
-                    case .alignmentExceedsStorageAlignment(let alignment, let max):
-                        preconditionFailure("Value alignment (\(alignment)) exceeds inline storage alignment (\(max)). Use Dictionary.Ordered.Bounded instead.")
-                    }
-                }
+                self._values = Buffer<Value>.Linear.Inline<capacity>()
                 self._keys = InlineArray(repeating: nil)
                 self._hashTable = InlineArray(repeating: -1)
                 self._count = 0
             }
 
             deinit {
-                guard _count > 0 else { return }
-                _values.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(_count)))
+                // Buffer.Linear.Inline handles element cleanup via Storage.Inline's deinit.
             }
         }
 
@@ -326,9 +308,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
         @safe
         public struct Small<let inlineCapacity: Int>: ~Copyable {
-            /// Inline value storage using Storage.Inline from storage-primitives.
+            /// Value storage using Buffer.Linear.Small — handles inline/heap dispatch internally.
             @usableFromInline
-            var _inlineValues: Storage<Value>.Static<inlineCapacity>
+            var _values: Buffer<Value>.Linear.Small<inlineCapacity>
 
             /// Keys stored inline.
             @usableFromInline
@@ -338,7 +320,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _inlineHashTable: InlineArray<inlineCapacity, Int>
 
-            /// Current element count (valid in both inline and heap modes).
+            // WORKAROUND: _count stored as raw Int, not Index<Key>.Count
+            // WHY: Key storage still uses InlineArray<inlineCapacity, Key?> which indexes by Int
+            // WHEN TO REMOVE: Key storage migration to Buffer<Key>.Linear.Inline + Hash.Table<Key>.Static
             @usableFromInline
             var _count: Int
 
@@ -346,79 +330,37 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _heapKeys: Set<Key>.Ordered?
 
-            /// Heap storage for values when spilled. Nil when using inline storage.
-            @usableFromInline
-            var _heapValues: Storage<Value>?
-
-            /// Cached pointer to heap values. Only valid when _heapValues is non-nil.
-            @usableFromInline
-            var _heapValuePtr: UnsafeMutablePointer<Value>?
-
             /// Creates an empty small ordered dictionary.
             @inlinable
             public init() {
-                do {
-                    self._inlineValues = try Storage<Value>.Static<inlineCapacity>()
-                } catch {
-                    switch error {
-                    case .strideExceedsSlotSize(let stride, let max):
-                        preconditionFailure("Value stride (\(stride)) exceeds inline storage slot size (\(max) bytes). Use Dictionary.Ordered.Bounded instead.")
-                    case .alignmentExceedsStorageAlignment(let alignment, let max):
-                        preconditionFailure("Value alignment (\(alignment)) exceeds inline storage alignment (\(max)). Use Dictionary.Ordered.Bounded instead.")
-                    }
-                }
+                self._values = Buffer<Value>.Linear.Small<inlineCapacity>()
                 self._inlineKeys = InlineArray(repeating: nil)
                 self._inlineHashTable = InlineArray(repeating: -1)
                 self._count = 0
                 self._heapKeys = nil
-                self._heapValues = nil
-                unsafe (self._heapValuePtr = nil)
             }
 
             deinit {
-                let count = _count
-                guard count > 0 else { return }
-
-                if _heapValues != nil {
-                    // Elements are on heap - Storage handles cleanup via its deinit
-                    // Set count for proper cleanup
-                    _heapValues!.count = Index_Primitives.Index<Value>.Count(UInt(count))
-                } else {
-                    // Elements are inline - use Storage.Inline's deinitialize
-                    _inlineValues.deinitialize(count: Index_Primitives.Index<Value>.Count(UInt(count)))
-                }
+                // Buffer.Linear.Small handles cleanup for both inline and heap modes.
             }
 
             /// Whether the dictionary is currently using heap storage.
             @inlinable
             public var isSpilled: Bool { _heapKeys != nil }
 
-            /// Spills inline storage to heap.
+            /// Spills inline key storage to heap.
             @usableFromInline
-            mutating func _spillToHeap(minimumCapacity: Int) {
+            mutating func _spillKeysToHeap() {
                 precondition(_heapKeys == nil, "Already spilled")
 
-                // Create heap storage with growth factor
-                let newCapacity = Swift.max(minimumCapacity, inlineCapacity * 2, 8)
-                let newKeys = Set<Key>.Ordered()
-                let valueCapacity = Index_Primitives.Index<Value>.Count(UInt(newCapacity))
-                let newValues = Storage<Value>.create(minimumCapacity: valueCapacity)
-
-                // Move keys from inline to heap
-                var heapKeys = newKeys
+                var heapKeys = Set<Key>.Ordered()
                 for i in 0..<_count {
                     if let key = _inlineKeys[i] {
                         heapKeys.insert(key)
                     }
                 }
 
-                // Move values from inline to heap using Storage.Inline's move(to:count:)
-                _inlineValues.move(to: newValues, count: Index_Primitives.Index<Value>.Count(UInt(_count)))
-                newValues.count = Index_Primitives.Index<Value>.Count(UInt(_count))
-
                 _heapKeys = heapKeys
-                _heapValues = newValues
-                unsafe (_heapValuePtr = newValues.pointer(at: .zero).base)
             }
         }
     }

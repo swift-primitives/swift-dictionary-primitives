@@ -106,8 +106,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Merge.Keep {
                 // Update value without changing position
                 if let index = dict._keys.index(key) {
                     dict.makeUnique()
-                    _ = dict._values._moveValue(at: index)
-                    dict._values._initializeValue(at: index, to: value)
+                    _ = dict._values.replace(at: index.retag(Value.self), with: value)
                 }
             } else {
                 dict.set(key, value)

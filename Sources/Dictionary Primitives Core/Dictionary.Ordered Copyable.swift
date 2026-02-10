@@ -27,11 +27,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
                 let first = _keys.index(key)!
                 throw .duplicate(.init(key: key, first: first, second: _keys.count))
             }
-            let currentCount = _keys.count
-            ensureCapacity(currentCount)
-            let valueIndex = currentCount.retag(Value.self).subtract.saturating(.one)
-            _values.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
-            _values.count = valueIndex + .one
+            _values.append(value)
         }
     }
 
@@ -49,17 +45,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         for (key, value) in pairs {
             if let existingKeyIndex = _keys.index(key) {
                 let valueIndex = existingKeyIndex.retag(Value.self)
-                let existingValue = unsafe _cachedValuePtr[Int(bitPattern: valueIndex)]
+                let existingValue = _values[valueIndex]
                 let newValue = try combine(existingValue, value)
-                _ = _values.move(at: valueIndex)
-                _values.initialize(to: newValue, at: valueIndex)
+                _ = _values.replace(at: valueIndex, with: newValue)
             } else {
-                let currentCount = _keys.count
-                ensureCapacity(currentCount + .one)
                 _keys.insert(key)
-                let valueIndex = currentCount.retag(Value.self)
-                _values.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
-                _values.count = valueIndex + .one
+                _values.append(value)
             }
         }
     }
@@ -71,10 +62,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// Ensures the storage is uniquely referenced before mutation.
     @usableFromInline
     mutating func makeUnique() {
-        if !isKnownUniquelyReferenced(&_values) {
-            _values = _values.copy()
-            unsafe (_cachedValuePtr = _values.pointer(at: .zero).base)
-        }
+        _values.ensureUnique()
     }
 
     /// Sets the value for the given key (CoW-aware).
@@ -86,15 +74,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         makeUnique()
         if let existingKeyIndex = _keys.index(key) {
             let valueIndex = existingKeyIndex.retag(Value.self)
-            _ = _values.move(at: valueIndex)
-            _values.initialize(to: value, at: valueIndex)
+            _ = _values.replace(at: valueIndex, with: value)
         } else {
-            let currentCount = _keys.count
-            ensureCapacity(currentCount + .one)
             _keys.insert(key)
-            let valueIndex = currentCount.retag(Value.self)
-            _values.initialize(to: value, at: Index_Primitives.Index<Value>(valueIndex))
-            _values.count = valueIndex + .one
+            _values.append(value)
         }
     }
 
@@ -113,9 +96,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         guard let keyIndex = _keys.index(key) else { return nil }
         let valueIndex = keyIndex.retag(Value.self)
         _keys.remove(key)
-        let value = _values.move(at: valueIndex)
-        _values.shiftLeft(removedAt: valueIndex)
-        return value
+        return _values.remove(at: valueIndex)
     }
 
     /// Removes all key-value pairs (CoW-aware).
@@ -128,10 +109,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public mutating func clear(keepingCapacity: Bool = false) {
         makeUnique()
         _keys.clear(keepingCapacity: keepingCapacity)
-        _values.deinitialize()
+        _values.removeAll()
         if !keepingCapacity {
-            _values = Storage<Value>.create(minimumCapacity: .zero)
-            unsafe (_cachedValuePtr = _values.pointer(at: .zero).base)
+            _values = Buffer<Value>.Linear(minimumCapacity: .zero)
         }
     }
 }
@@ -147,8 +127,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public subscript(key: Key) -> Value? {
         get {
             guard let keyIndex = _keys.index(key) else { return nil }
-            let pos = Int(bitPattern: keyIndex)
-            return unsafe _cachedValuePtr[pos]
+            return _values[keyIndex.retag(Value.self)]
         }
         set {
             if let newValue = newValue {
@@ -165,9 +144,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// - Precondition: The index must be in bounds.
     @inlinable
     public subscript(at index: Index_Primitives.Index<Key>) -> (key: Key, value: Value) {
-        let pos = Int(bitPattern: index)
         precondition(index < _keys.count, "Index out of bounds")
-        return (_keys[index], unsafe _cachedValuePtr[pos])
+        return (_keys[index], _values[index.retag(Value.self)])
     }
 
     /// Accesses the key-value pair at the given raw index (stdlib compatibility).
@@ -175,7 +153,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public subscript(index index: Int) -> (key: Key, value: Value) {
         precondition(index >= 0 && index < Int(bitPattern: _keys.count), "Index out of bounds")
         let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
-        return (_keys[keyIndex], unsafe _cachedValuePtr[index])
+        return (_keys[keyIndex], _values[keyIndex.retag(Value.self)])
     }
 }
 
@@ -185,11 +163,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Equatable where Value: 
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs._keys == rhs._keys else { return false }
-        let count = Int(bitPattern: lhs._keys.count)
-        for i in 0..<count {
-            if unsafe lhs._cachedValuePtr[i] != rhs._cachedValuePtr[i] {
+        var idx: Index_Primitives.Index<Key> = .zero
+        let end = lhs._keys.count.map(Ordinal.init)
+        while idx < end {
+            if lhs._values[idx.retag(Value.self)] != rhs._values[idx.retag(Value.self)] {
                 return false
             }
+            idx += .one
         }
         return true
     }
@@ -200,12 +180,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Equatable where Value: 
 extension Dictionary_Primitives_Core.Dictionary.Ordered: Hashable where Key: Hashable, Value: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
-        let count = Int(bitPattern: _keys.count)
-        hasher.combine(count)
-        for i in 0..<count {
-            let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(i)))
-            hasher.combine(_keys[keyIndex])
-            hasher.combine(unsafe _cachedValuePtr[i])
+        hasher.combine(Int(bitPattern: _keys.count))
+        var idx: Index_Primitives.Index<Key> = .zero
+        let end = _keys.count.map(Ordinal.init)
+        while idx < end {
+            hasher.combine(_keys[idx])
+            hasher.combine(_values[idx.retag(Value.self)])
+            idx += .one
         }
     }
 }
@@ -216,12 +197,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: CustomStringConvertible
     public var description: String {
         var result = "Dictionary.Ordered(["
         var first = true
-        let count = Int(bitPattern: _keys.count)
-        for i in 0..<count {
+        var idx: Index_Primitives.Index<Key> = .zero
+        let end = _keys.count.map(Ordinal.init)
+        while idx < end {
             if !first { result += ", " }
-            let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(i)))
-            result += "\(_keys[keyIndex]): \(unsafe _cachedValuePtr[i])"
+            result += "\(_keys[idx]): \(_values[idx.retag(Value.self)])"
             first = false
+            idx += .one
         }
         result += "])"
         return result
@@ -236,8 +218,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
     public subscript(key: Key) -> Value? {
         get {
             guard let keyIndex = _keys.index(key) else { return nil }
-            let pos = Int(bitPattern: keyIndex)
-            return unsafe _cachedValuePtr[pos]
+            return _values[keyIndex.retag(Value.self)]
         }
     }
 
@@ -246,7 +227,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
     public subscript(index index: Int) -> (key: Key, value: Value) {
         precondition(index >= 0 && index < Int(bitPattern: _keys.count), "Index out of bounds")
         let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
-        return (_keys[keyIndex], unsafe _cachedValuePtr[index])
+        return (_keys[keyIndex], _values[keyIndex.retag(Value.self)])
     }
 }
 
@@ -254,11 +235,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Equatable where
     @inlinable
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard lhs._keys == rhs._keys else { return false }
-        let count = Int(bitPattern: lhs._keys.count)
-        for i in 0..<count {
-            if unsafe lhs._cachedValuePtr[i] != rhs._cachedValuePtr[i] {
+        var idx: Index_Primitives.Index<Key> = .zero
+        let end = lhs._keys.count.map(Ordinal.init)
+        while idx < end {
+            if lhs._values[idx.retag(Value.self)] != rhs._values[idx.retag(Value.self)] {
                 return false
             }
+            idx += .one
         }
         return true
     }
@@ -267,12 +250,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Equatable where
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Hashable where Key: Hashable, Value: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
-        let count = Int(bitPattern: _keys.count)
-        hasher.combine(count)
-        for i in 0..<count {
-            let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(i)))
-            hasher.combine(_keys[keyIndex])
-            hasher.combine(unsafe _cachedValuePtr[i])
+        hasher.combine(Int(bitPattern: _keys.count))
+        var idx: Index_Primitives.Index<Key> = .zero
+        let end = _keys.count.map(Ordinal.init)
+        while idx < end {
+            hasher.combine(_keys[idx])
+            hasher.combine(_values[idx.retag(Value.self)])
+            idx += .one
         }
     }
 }
@@ -286,7 +270,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
         get {
             guard let index = index(of: key) else { return nil }
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            return _values.withElement(at: valueIndex) { $0 }
+            return _values[valueIndex]
         }
     }
 
@@ -295,7 +279,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
     public subscript(index index: Int) -> (key: Key, value: Value) {
         precondition(index >= 0 && index < count, "Index out of bounds")
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return (_keys[index]!, _values.withElement(at: valueIndex) { $0 })
+        return (_keys[index]!, _values[valueIndex])
     }
 }
 
@@ -308,12 +292,11 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
         get {
             if let heapKeys = _heapKeys {
                 guard let keyIndex = heapKeys.index(key) else { return nil }
-                let pos = Int(bitPattern: keyIndex)
-                return unsafe _heapValuePtr![pos]
+                return _values[keyIndex.retag(Value.self)]
             }
             guard let index = _inlineIndex(of: key) else { return nil }
             let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-            return _inlineValues.withElement(at: valueIndex) { $0 }
+            return _values[valueIndex]
         }
     }
 
@@ -321,11 +304,11 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
     @inlinable
     public subscript(index index: Int) -> (key: Key, value: Value) {
         precondition(index >= 0 && index < count, "Index out of bounds")
+        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
         if let heapKeys = _heapKeys {
             let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))
-            return (heapKeys[keyIndex], unsafe _heapValuePtr![index])
+            return (heapKeys[keyIndex], _values[valueIndex])
         }
-        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
-        return (_inlineKeys[index]!, _inlineValues.withElement(at: valueIndex) { $0 })
+        return (_inlineKeys[index]!, _values[valueIndex])
     }
 }

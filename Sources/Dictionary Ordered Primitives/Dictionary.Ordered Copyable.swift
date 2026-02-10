@@ -24,7 +24,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         let _keys: Set<Key>.Ordered
 
         @usableFromInline
-        let _values: Dictionary<Key, Value>.Ordered.ValueStorage
+        let _values: Buffer<Value>.Linear
 
         @usableFromInline
         var _index: Index_Primitives.Index<Key>
@@ -44,7 +44,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         public mutating func next() -> Element? {
             guard _index < _count else { return nil }
             let key = _keys[_index]
-            let value = _values._readValue(at: _index)
+            let value = _values[_index.retag(Value.self)]
             _index = _index + .one
             return (key, value)
         }
@@ -89,7 +89,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         guard index < _keys.count else {
             throw .bounds(.init(index: index, count: _keys.count))
         }
-        return (key: _keys[index], value: _values._readValue(at: index))
+        return (key: _keys[index], value: _values[index.retag(Value.self)])
     }
 }
 
@@ -110,7 +110,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Swift.Collection where 
         precondition(position >= 0 && position < countInt, "Index out of bounds")
         let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(position)))
         let key = _keys[keyIndex]
-        let value = _values._readValue(at: position)
+        let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(position)))
+        let value = _values[valueIndex]
         return (key, value)
     }
 

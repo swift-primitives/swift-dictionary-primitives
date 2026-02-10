@@ -29,7 +29,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Basic insert and retrieve`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<8>()
+        var dict = Dictionary<String, Int>.Ordered.Static<8>()
 
         try! dict.set("apple", 1)
         try! dict.set("banana", 2)
@@ -50,7 +50,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Count and isEmpty`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         var isEmpty = dict.isEmpty
         var count = dict.count
@@ -70,7 +70,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Update existing key`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("key", 1)
         dict.withValue(forKey: "key") { value in
@@ -90,7 +90,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Contains key`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("exists", 42)
 
@@ -102,7 +102,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Index of key`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("first", 1)
         try! dict.set("second", 2)
@@ -116,7 +116,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Remove and shift`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<8>()
+        var dict = Dictionary<String, Int>.Ordered.Static<8>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -139,7 +139,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Remove first element`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -155,7 +155,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Remove last element`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -171,7 +171,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Remove non-existent key`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("a", 1)
 
@@ -183,7 +183,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `Clear`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -201,7 +201,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `WithValue at index`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         try! dict.set("x", 10)
         try! dict.set("y", 20)
@@ -220,7 +220,7 @@ extension DictionaryOrderedInlineTests.Unit {
 
     @Test
     func `isFull property`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<2>()
+        var dict = Dictionary<String, Int>.Ordered.Static<2>()
 
         var isFull = dict.isFull
         #expect(!isFull)
@@ -241,19 +241,19 @@ extension DictionaryOrderedInlineTests.EdgeCase {
 
     @Test
     func `Overflow throws error`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<2>()
+        var dict = Dictionary<String, Int>.Ordered.Static<2>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
 
-        #expect(throws: Dictionary<String, Int>.Ordered.Inline<2>.Error.self) {
+        #expect(throws: Dictionary<String, Int>.Ordered.Static<2>.Error.self) {
             try dict.set("c", 3)
         }
     }
 
     @Test
     func `Update at capacity does not throw`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<2>()
+        var dict = Dictionary<String, Int>.Ordered.Static<2>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -267,7 +267,7 @@ extension DictionaryOrderedInlineTests.EdgeCase {
 
     @Test
     func `Single element operations`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<1>()
+        var dict = Dictionary<String, Int>.Ordered.Static<1>()
 
         try! dict.set("only", 42)
         var count = dict.count
@@ -287,7 +287,7 @@ extension DictionaryOrderedInlineTests.EdgeCase {
 
     @Test
     func `Reinsert after remove`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<3>()
+        var dict = Dictionary<String, Int>.Ordered.Static<3>()
 
         try! dict.set("a", 1)
         try! dict.set("b", 2)
@@ -305,7 +305,7 @@ extension DictionaryOrderedInlineTests.EdgeCase {
 
     @Test
     func `Empty dictionary operations`() {
-        var dict = Dictionary<String, Int>.Ordered.Inline<4>()
+        var dict = Dictionary<String, Int>.Ordered.Static<4>()
 
         let isEmpty = dict.isEmpty
         let count = dict.count
