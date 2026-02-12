@@ -139,11 +139,11 @@ extension __DictionaryOrderedError: CustomStringConvertible {
     public var description: String {
         switch self {
         case .bounds(let e):
-            return "index \(Int(bitPattern: e.index)) out of bounds for count \(Int(bitPattern: e.count))"
+            return "index \(e.index) out of bounds for count \(e.count)"
         case .empty:
             return "operation attempted on empty ordered dictionary"
         case .duplicate(let e):
-            return "duplicate key '\(e.key)' at indices \(Int(bitPattern: e.first)) and \(Int(bitPattern: e.second))"
+            return "duplicate key '\(e.key)' at indices \(e.first) and \(e.second)"
         }
     }
 }
@@ -152,11 +152,11 @@ extension __DictionaryOrderedBoundedError: CustomStringConvertible {
     public var description: String {
         switch self {
         case .bounds(let index, let count):
-            return "index \(Int(bitPattern: index)) out of bounds for count \(Int(bitPattern: count))"
+            return "index \(index) out of bounds for count \(count)"
         case .empty:
             return "operation attempted on empty ordered dictionary"
         case .duplicate(let key, let first, let second):
-            return "duplicate key '\(key)' at indices \(Int(bitPattern: first)) and \(Int(bitPattern: second))"
+            return "duplicate key '\(key)' at indices \(first) and \(second)"
         case .overflow:
             return "bounded dictionary is full"
         case .invalidCapacity:
@@ -171,9 +171,9 @@ extension __DictionaryOrderedInlineError: CustomStringConvertible {
         case .overflow:
             return "inline dictionary is full"
         case .bounds(let e):
-            return "index \(Int(bitPattern: e.index)) out of bounds for count \(Int(bitPattern: e.count))"
+            return "index \(e.index) out of bounds for count \(e.count)"
         case .duplicate(let key, let first, let second):
-            return "duplicate key '\(key)' at indices \(Int(bitPattern: first)) and \(Int(bitPattern: second))"
+            return "duplicate key '\(key)' at indices \(first) and \(second)"
         }
     }
 }

@@ -305,10 +305,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             @usableFromInline
             var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
 
-            // WORKAROUND: _count stored as raw Int
-            // WHY: Tracks count across inline/heap modes. Conscious debt per [PATTERN-016].
             @usableFromInline
-            var _count: Int
+            var _count: Index_Primitives.Index<Key>.Count
 
             /// Heap storage for keys when spilled. Nil when using inline storage.
             @usableFromInline
@@ -319,7 +317,7 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             public init() {
                 self._values = Buffer<Value>.Linear.Small<inlineCapacity>()
                 self._inlineKeys = Buffer<Key>.Linear.Inline<inlineCapacity>()
-                self._count = 0
+                self._count = .zero
                 self._heapKeys = nil
             }
 
@@ -337,11 +335,8 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
                 precondition(_heapKeys == nil, "Already spilled")
 
                 var heapKeys = Set<Key>.Ordered()
-                var idx: Index_Primitives.Index<Key> = .zero
-                let end = _inlineKeys.count.map(Ordinal.init)
-                while idx < end {
-                    heapKeys.insert(_inlineKeys[idx])
-                    idx += .one
+                _inlineKeys.forEach { key in
+                    heapKeys.insert(key)
                 }
                 _heapKeys = heapKeys
                 _inlineKeys.removeAll()

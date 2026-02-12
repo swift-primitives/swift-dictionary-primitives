@@ -11,6 +11,7 @@
 
 import Testing
 @testable import Dictionary_Primitives
+import Identity_Primitives_Test_Support
 
 // MARK: - Dictionary.Ordered.Small Tests
 //

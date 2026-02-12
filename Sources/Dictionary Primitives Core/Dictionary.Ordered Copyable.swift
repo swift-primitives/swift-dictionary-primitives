@@ -73,8 +73,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public mutating func set(_ key: Key, _ value: Value) {
         makeUnique()
         if let existingKeyIndex = _keys.index(key) {
-            let valueIndex = existingKeyIndex.retag(Value.self)
-            _ = _values.replace(at: valueIndex, with: value)
+            _ = _values.replace(at: existingKeyIndex.retag(Value.self), with: value)
         } else {
             _keys.insert(key)
             _values.append(value)
@@ -94,9 +93,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public mutating func remove(_ key: Key) -> Value? {
         makeUnique()
         guard let keyIndex = _keys.index(key) else { return nil }
-        let valueIndex = keyIndex.retag(Value.self)
         _keys.remove(key)
-        return _values.remove(at: valueIndex)
+        return _values.remove(at: keyIndex.retag(Value.self))
     }
 
     /// Removes all key-value pairs (CoW-aware).
@@ -180,7 +178,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered: Equatable where Value: 
 extension Dictionary_Primitives_Core.Dictionary.Ordered: Hashable where Key: Hashable, Value: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(Int(bitPattern: _keys.count))
+        hasher.combine(_keys.count)
         var idx: Index_Primitives.Index<Key> = .zero
         let end = _keys.count.map(Ordinal.init)
         while idx < end {
@@ -250,7 +248,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Equatable where
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Hashable where Key: Hashable, Value: Hashable {
     @inlinable
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(Int(bitPattern: _keys.count))
+        hasher.combine(_keys.count)
         var idx: Index_Primitives.Index<Key> = .zero
         let end = _keys.count.map(Ordinal.init)
         while idx < end {
@@ -304,7 +302,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
     /// Accesses the key-value pair at the given index.
     @inlinable
     public subscript(index index: Int) -> (key: Key, value: Value) {
-        precondition(index >= 0 && index < count, "Index out of bounds")
+        precondition(index >= 0 && index < Int(bitPattern: count), "Index out of bounds")
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
         if let heapKeys = _heapKeys {
             let keyIndex = Index_Primitives.Index<Key>(Ordinal(UInt(index)))

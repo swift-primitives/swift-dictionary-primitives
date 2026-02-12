@@ -93,8 +93,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) {
         if let existingKeyIndex = _keys.index(key) {
-            let valueIndex = existingKeyIndex.retag(Value.self)
-            _ = _values.replace(at: valueIndex, with: value)
+            _ = _values.replace(at: existingKeyIndex.retag(Value.self), with: value)
         } else {
             _keys.insert(key)
             _values.append(value)
@@ -110,9 +109,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
         guard let keyIndex = _keys.index(key) else { return nil }
-        let valueIndex = keyIndex.retag(Value.self)
         _keys.remove(key)
-        return _values.remove(at: valueIndex)
+        return _values.remove(at: keyIndex.retag(Value.self))
     }
 
     /// Removes all key-value pairs.
@@ -244,8 +242,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) throws(Error) {
         if let existingKeyIndex = _keys.index(key) {
-            let valueIndex = existingKeyIndex.retag(Value.self)
-            _ = _values.replace(at: valueIndex, with: value)
+            _ = _values.replace(at: existingKeyIndex.retag(Value.self), with: value)
         } else {
             guard _keys.count < capacity else {
                 throw .overflow
@@ -263,9 +260,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
         guard let keyIndex = _keys.index(key) else { return nil }
-        let valueIndex = keyIndex.retag(Value.self)
         _keys.remove(key)
-        return _values.remove(at: valueIndex)
+        return _values.remove(at: keyIndex.retag(Value.self))
     }
 
     /// Removes all key-value pairs.
@@ -351,8 +347,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         if let existingPosition = _hashTable.position(forHash: hashValue, equals: { idx in
             _keys[idx] == key
         }) {
-            let valueIndex = Index_Primitives.Index<Key>(existingPosition).retag(Value.self)
-            _ = _values.replace(at: valueIndex, with: value)
+            _ = _values.replace(at: Index_Primitives.Index<Key>(existingPosition).retag(Value.self), with: value)
         } else {
             guard !_hashTable.isFull else {
                 throw .overflow
@@ -380,9 +375,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         }
 
         let keyIndex = Index_Primitives.Index<Key>(removedPosition)
-        let valueIndex = keyIndex.retag(Value.self)
         _ = _keys.remove(at: keyIndex)
-        let value = _values.remove(at: valueIndex)
+        let value = _values.remove(at: keyIndex.retag(Value.self))
 
         // Update positions in hash table for shifted elements
         _hashTable.positions.decrement(after: removedPosition)
@@ -406,8 +400,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         guard let position = _hashTable.position(forHash: hashValue, equals: { idx in
             _keys[idx] == key
         }) else { return nil }
-        let valueIndex = Index_Primitives.Index<Key>(position).retag(Value.self)
-        return body(_values[valueIndex])
+        return body(_values[Index_Primitives.Index<Key>(position).retag(Value.self)])
     }
 
     /// Accesses the value at the given index via closure (for ~Copyable values).
@@ -416,6 +409,19 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         precondition(index >= 0 && index < Int(bitPattern: _keys.count), "Index out of bounds")
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
         return body(_values[valueIndex])
+    }
+
+    /// Accesses the value at the given typed index via closure (for ~Copyable values).
+    ///
+    /// - Parameters:
+    ///   - index: The typed index.
+    ///   - body: A closure that receives a borrowed reference to the value.
+    /// - Returns: The result of the closure.
+    /// - Precondition: The index must be in bounds.
+    @inlinable
+    public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) -> R) -> R {
+        precondition(index < _keys.count, "Index out of bounds")
+        return body(_values[index.retag(Value.self)])
     }
 
     /// Accesses the value at the given typed index via closure, with typed error on bounds failure.
@@ -436,11 +442,11 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copyable {
     /// The number of key-value pairs.
     @inlinable
-    public var count: Int { _count }
+    public var count: Index_Primitives.Index<Key>.Count { _count }
 
     /// Whether the dictionary is empty.
     @inlinable
-    public var isEmpty: Bool { _count == 0 }
+    public var isEmpty: Bool { _count == .zero }
 
     /// Returns whether the dictionary contains the given key.
     @inlinable
@@ -473,29 +479,27 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         if let heapKeys = _heapKeys {
             // Heap mode
             if let existingKeyIndex = heapKeys.index(key) {
-                let valueIndex = existingKeyIndex.retag(Value.self)
-                _ = _values.replace(at: valueIndex, with: value)
+                _ = _values.replace(at: existingKeyIndex.retag(Value.self), with: value)
             } else {
                 _heapKeys!.insert(key)
                 _values.append(value)
-                _count += 1
+                _count += .one
             }
         } else {
             // Inline mode
             if let existingIndex = _inlineIndex(of: key) {
-                let valueIndex = existingIndex.retag(Value.self)
-                _ = _values.replace(at: valueIndex, with: value)
+                _ = _values.replace(at: existingIndex.retag(Value.self), with: value)
             } else if !_inlineKeys.isFull {
                 // Still room in inline storage
                 _ = _inlineKeys.append(key)
                 _values.append(value)
-                _count += 1
+                _count += .one
             } else {
                 // Need to spill keys to heap (values spill handled by Buffer.Small)
                 _spillKeysToHeap()
                 _heapKeys!.insert(key)
                 _values.append(value)
-                _count += 1
+                _count += .one
             }
         }
     }
@@ -510,19 +514,16 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         if let heapKeys = _heapKeys {
             // Heap mode
             guard let keyIndex = heapKeys.index(key) else { return nil }
-            let valueIndex = keyIndex.retag(Value.self)
             _heapKeys!.remove(key)
-            let value = _values.remove(at: valueIndex)
-            _count -= 1
+            let value = _values.remove(at: keyIndex.retag(Value.self))
+            _count = _count.subtract.saturating(.one)
             return value
         } else {
             // Inline mode
             guard let index = _inlineIndex(of: key) else { return nil }
-
-            let valueIndex = index.retag(Value.self)
-            let value = _values.remove(at: valueIndex)
+            let value = _values.remove(at: index.retag(Value.self))
             _ = _inlineKeys.remove(at: index)
-            _count -= 1
+            _count = _count.subtract.saturating(.one)
 
             return value
         }
@@ -537,7 +538,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         } else {
             _inlineKeys.removeAll()
         }
-        _count = 0
+        _count = .zero
     }
 
     /// Accesses the value for the given key via closure (for ~Copyable values).
@@ -554,9 +555,22 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
     /// Accesses the value at the given index via closure (for ~Copyable values).
     @inlinable
     public func withValue<R>(atIndex index: Int, _ body: (borrowing Value) -> R) -> R {
-        precondition(index >= 0 && index < count, "Index out of bounds")
+        precondition(index >= 0 && index < Int(bitPattern: count), "Index out of bounds")
         let valueIndex = Index_Primitives.Index<Value>(Ordinal(UInt(index)))
         return body(_values[valueIndex])
+    }
+
+    /// Accesses the value at the given typed index via closure (for ~Copyable values).
+    ///
+    /// - Parameters:
+    ///   - index: The typed index.
+    ///   - body: A closure that receives a borrowed reference to the value.
+    /// - Returns: The result of the closure.
+    /// - Precondition: The index must be in bounds.
+    @inlinable
+    public func withValue<R>(at index: Index_Primitives.Index<Key>, _ body: (borrowing Value) -> R) -> R {
+        precondition(index < count, "Index out of bounds")
+        return body(_values[index.retag(Value.self)])
     }
 }
 
