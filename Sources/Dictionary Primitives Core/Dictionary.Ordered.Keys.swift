@@ -101,7 +101,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys where Value: ~Copya
 // MARK: - Sequence Conformance
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys: Swift.Sequence {
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         var base: Set<Key>.Ordered.Iterator
 

@@ -171,7 +171,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
 // MARK: - Sequence Conformance (Copyable values only)
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         let _values: Buffer<Value>.Linear
 

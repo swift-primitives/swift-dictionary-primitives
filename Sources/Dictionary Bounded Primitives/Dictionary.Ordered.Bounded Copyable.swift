@@ -17,7 +17,7 @@ public import Index_Primitives
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Copyable {
     /// Iterator for bounded ordered dictionary.
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         public typealias Element = (key: Key, value: Value)
 
         @usableFromInline
