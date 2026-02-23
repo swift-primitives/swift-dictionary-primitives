@@ -116,3 +116,15 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Swift.Bidirecti
 // MARK: - Swift.RandomAccessCollection Conformance
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Swift.RandomAccessCollection where Value: Copyable {}
+
+// MARK: - Sequence.Clearable Conformance
+
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Sequence.Clearable where Value: Copyable {
+    /// Removes all key-value pairs from the dictionary.
+    ///
+    /// This enables `.forEach.consuming { }` pattern via `Property.View` extension.
+    @inlinable
+    public mutating func removeAll() {
+        clear()
+    }
+}
