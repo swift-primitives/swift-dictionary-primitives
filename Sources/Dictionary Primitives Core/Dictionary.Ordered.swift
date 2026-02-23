@@ -242,16 +242,16 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         public struct Static<let capacity: Int>: ~Copyable {
             /// Value storage using Buffer.Linear.Inline from buffer-primitives.
             @usableFromInline
-            var _values: Buffer<Value>.Linear.Inline<capacity>
+            package var _values: Buffer<Value>.Linear.Inline<capacity>
 
             /// Dense key storage using Buffer.Linear.Inline.
             @usableFromInline
-            var _keys: Buffer<Key>.Linear.Inline<capacity>
+            package var _keys: Buffer<Key>.Linear.Inline<capacity>
 
             /// Hash table for O(1) key lookup via open-addressed linear probing.
             /// Capacity must be a power of two.
             @usableFromInline
-            var _hashTable: Hash.Table<Key>.Static<capacity>
+            package var _hashTable: Hash.Table<Key>.Static<capacity>
 
             /// Creates an empty inline ordered dictionary.
             /// - Note: `capacity` must be a power of two (hash table requirement).
@@ -299,18 +299,18 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         public struct Small<let inlineCapacity: Int>: ~Copyable {
             /// Value storage using Buffer.Linear.Small — handles inline/heap dispatch internally.
             @usableFromInline
-            var _values: Buffer<Value>.Linear.Small<inlineCapacity>
+            package var _values: Buffer<Value>.Linear.Small<inlineCapacity>
 
             /// Dense key storage for inline mode.
             @usableFromInline
-            var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
+            package var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
 
             @usableFromInline
-            var _count: Index_Primitives.Index<Key>.Count
+            package var _count: Index_Primitives.Index<Key>.Count
 
             /// Heap storage for keys when spilled. Nil when using inline storage.
             @usableFromInline
-            var _heapKeys: Set<Key>.Ordered?
+            package var _heapKeys: Set<Key>.Ordered?
 
             /// Creates an empty small ordered dictionary.
             @inlinable

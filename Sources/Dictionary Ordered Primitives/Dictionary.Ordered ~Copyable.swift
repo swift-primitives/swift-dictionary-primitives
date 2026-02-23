@@ -52,7 +52,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
             guard end > .zero else { return }
             var idx: Index_Primitives.Index<Key> = .zero
             while idx < end {
-                body(Entry(key: unsafe _base.pointee._keys[idx], value: unsafe _base.pointee._values.consumeFront()))
+                body(Entry(key: unsafe _base.pointee._keys[idx], value: unsafe _base.pointee._values.remove.first()))
                 idx += .one
             }
             unsafe _base.pointee._keys.clear(keepingCapacity: true)

@@ -119,7 +119,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     @inlinable
     public mutating func clear(keepingCapacity: Bool = false) {
         _keys.clear(keepingCapacity: keepingCapacity)
-        _values.removeAll()
+        _values.remove.all()
         if !keepingCapacity {
             _values = Buffer<Value>.Linear(minimumCapacity: .zero)
         }
@@ -201,7 +201,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         var idx: Index_Primitives.Index<Key> = .zero
         let end = _keys.count.map(Ordinal.init)
         while idx < end {
-            body(Entry(key: _keys[idx], value: _values.consumeFront()))
+            body(Entry(key: _keys[idx], value: _values.remove.first()))
             idx += .one
         }
         _keys.clear(keepingCapacity: true)
@@ -268,7 +268,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     @inlinable
     public mutating func clear() {
         _keys.clear(keepingCapacity: true)
-        _values.removeAll()
+        _values.remove.all()
     }
 
     /// Accesses the value for the given key via closure (for ~Copyable values).
@@ -347,7 +347,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
         if let existingPosition = _hashTable.position(forHash: hashValue, equals: { idx in
             _keys[idx] == key
         }) {
-            _ = _values.replace(at: Index_Primitives.Index<Key>(existingPosition).retag(Value.self), with: value)
+            _ = _values.replace(at: existingPosition.retag(Value.self), with: value)
         } else {
             guard !_hashTable.isFull else {
                 throw .overflow
@@ -374,9 +374,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
             return nil
         }
 
-        let keyIndex = Index_Primitives.Index<Key>(removedPosition)
-        _ = _keys.remove(at: keyIndex)
-        let value = _values.remove(at: keyIndex.retag(Value.self))
+        _ = _keys.remove(at: removedPosition)
+        let value = _values.remove(at: removedPosition.retag(Value.self))
 
         // Update positions in hash table for shifted elements
         _hashTable.positions.decrement(after: removedPosition)
@@ -389,7 +388,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     public mutating func clear() {
         guard _hashTable.count > .zero else { return }
         _keys.removeAll()
-        _values.removeAll()
+        _values.remove.all()
         _hashTable.remove.all()
     }
 
@@ -521,8 +520,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
         } else {
             // Inline mode
             guard let index = _inlineIndex(of: key) else { return nil }
+            let bounded = Index_Primitives.Index<Key>.Bounded<inlineCapacity>(index)!
             let value = _values.remove(at: index.retag(Value.self))
-            _ = _inlineKeys.remove(at: index)
+            _ = _inlineKeys.remove(at: bounded)
             _count = _count.subtract.saturating(.one)
 
             return value
@@ -532,7 +532,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
     /// Removes all key-value pairs.
     @inlinable
     public mutating func clear() {
-        _values.removeAll()
+        _values.remove.all()
         if _heapKeys != nil {
             _heapKeys!.clear(keepingCapacity: true)
         } else {
