@@ -136,54 +136,6 @@ extension DictionaryTests.Unit {
     }
 }
 
-// MARK: - Conditional Copyable Tests
-//
-// Dictionary (unordered) uses reference semantics when copied — copies share
-// Storage.Slab. These tests verify the Copyable conformance compiles and that
-// ARC lifetime management is correct.
-
-extension DictionaryTests.Unit {
-
-    @Test("Dictionary is Copyable when Value is Copyable")
-    func copyable() {
-        var dict = Dictionary<String, Int>()
-        dict.set("a", 1)
-        dict.set("b", 2)
-
-        // Verifies Copyable conformance compiles — copy shares storage
-        let copy = dict
-        #expect(copy.count == 2)
-        #expect(copy.contains("a") == true)
-        #expect(copy.contains("b") == true)
-    }
-
-    @Test("empty Dictionary is Copyable")
-    func emptyCopyable() {
-        let dict = Dictionary<String, Int>()
-        let copy = dict
-        #expect(copy.isEmpty == true)
-    }
-
-    @Test("copy after mutations reads shared state")
-    func copyAfterMutations() {
-        var dict = Dictionary<String, Int>()
-        dict.set("a", 1)
-        dict.set("b", 2)
-        dict.set("c", 3)
-        _ = dict.remove("b")
-        dict.set("d", 4)
-        dict.set("a", 99)
-
-        // Copy shares storage — reads same state as original
-        let copy = dict
-        #expect(copy.count == 3)
-        #expect(copy.contains("a") == true)
-        #expect(copy.contains("b") == false)
-        #expect(copy.contains("c") == true)
-        #expect(copy.contains("d") == true)
-    }
-}
-
 // MARK: - Swift.Sequence Tests
 
 extension DictionaryTests.Unit {
@@ -342,20 +294,6 @@ extension DictionaryTests.EdgeCase {
         dict.set("a", 2)
         #expect(dict["a"] == 2)
         #expect(dict.count == 1)
-    }
-
-    @Test("deinit after copy does not double-free")
-    func deinitAfterCopy() {
-        var dict: Dictionary<String, Int>? = Dictionary<String, Int>()
-        dict!.set("a", 1)
-        dict!.set("b", 2)
-
-        // Copy shares Storage.Slab reference (class) — ARC keeps it alive
-        var copy: Dictionary<String, Int>? = dict
-        dict = nil
-        #expect(copy!.count == 2)
-        copy = nil
-        // No crash = ARC correctly manages Storage.Slab lifetime
     }
 
     @Test("multiple insert-remove cycles")

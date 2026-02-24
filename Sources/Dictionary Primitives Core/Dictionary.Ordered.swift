@@ -103,7 +103,10 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
     public init(minimumCapacity: Index_Primitives.Index<Key>.Count = .zero) {
         self._hashTable = Hash.Table<Key>(minimumCapacity: minimumCapacity)
         self._keys = Buffer<Key>.Slab(minimumCapacity: minimumCapacity)
-        self._values = Buffer<Value>.Slab(minimumCapacity: minimumCapacity.retag(Value.self))
+        // Use keys' actual capacity so values.capacity >= keys.capacity.
+        // ManagedBuffer rounds up differently per element stride — without this,
+        // a slot valid for keys could exceed values' bitmap bounds.
+        self._values = Buffer<Value>.Slab(minimumCapacity: self._keys.capacity.retag(Value.self))
     }
 
     // Note: No explicit deinit needed — Buffer.Slab handles cleanup via bitmap-driven deinitialization

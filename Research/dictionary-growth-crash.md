@@ -2,9 +2,9 @@
 
 <!--
 ---
-version: 1.0.0
+version: 2.0.0
 last_updated: 2026-02-24
-status: IN_PROGRESS
+status: DECISION
 ---
 -->
 
@@ -29,120 +29,163 @@ What causes the `Bit.Vector.Bounded` subscript setter to receive an `index >= _c
 
 ## Analysis
 
-### Code Path Trace
+### Confirmed Root Cause: ManagedBuffer Capacity Divergence
 
-**Growth trigger** (`Dictionary+set.swift:36`):
-```swift
-if _keys.isFull { _grow() }
-```
-
-**Growth method** (`Dictionary ~Copyable.swift:120-154`):
-1. Computes `newCapacity = max(8, occupancy * 2)`
-2. Creates new `Buffer.Slab` and `Hash.Table`
-3. Iterates old buffer, moves elements to new buffer via `firstVacant()` + `insert()`
-4. Replaces `_keys`, `_values`, `_hashTable`
-
-**The crash site** is `header.bitmap[slot] = true` in `Buffer.Slab.insert` (static, `Buffer.Slab+Heap ~Copyable.swift:20`).
-
-### Bitmap Initialization Chain
-
-```
-Dictionary._grow()
-  → Buffer.Slab.init(minimumCapacity:)            [Buffer.Slab.swift:11-17]
-    → Storage.Slab.init(minimumCapacity:)          [Storage.Slab ~Copyable.swift:24-31]
-      → Storage.Heap.create(minimumCapacity:)      → ManagedBuffer (rounds up)
-      → Bit.Vector.Bounded(capacity: heap.slotCapacity, count: heap.slotCapacity)
-    → Header(capacity: storage.slotCapacity)       [Buffer.swift:575-576]
-      → Bit.Vector.Bounded(capacity: cap, count: cap)
-```
-
-Both the Storage.Slab bitmap and the Header bitmap are created with `_count == _capacity == heap.slotCapacity`.
-
-### Hypothesis 1: `_count` vs `_capacity` semantics mismatch
-
-**Bit.Vector.Bounded** uses `_count` as the logical size for subscript bounds checking:
-- Subscript: `precondition(index < _count)`
-- `isFull`: `_count >= _capacity`
-- `append`: increments `_count`
-
-For a **slab bitmap**, `_count` should equal `_capacity` because all positions are addressable — the bitmap tracks which of the N slots are occupied, and all N positions are valid subscript targets.
-
-The initialization `count: heap.slotCapacity` correctly makes all slots addressable. **This hypothesis is ELIMINATED** — `_count == _capacity` is correct for slab bitmaps.
-
-### Hypothesis 2: ManagedBuffer capacity rounding creates divergence
-
-`ManagedBuffer.create(minimumCapacity:)` may allocate more slots than requested. The actual capacity (`storage.slotCapacity`) can exceed `minimumCapacity`. Since the bitmap is created from `heap.slotCapacity` (the actual capacity), the bitmap accurately reflects the storage. **This hypothesis is ELIMINATED** — both bitmap and storage use the same `slotCapacity`.
-
-### Hypothesis 3: Hash table position exceeds slab capacity
-
-The hash table stores slab positions. During `set()`:
-```swift
-_hashTable.position(forHash: hashValue, equals: { position in
-    _keys[position.retag(Bit.self)] == key
-})
-```
-
-Positions come from previous `_hashTable.insert(__unchecked:, position: slot, ...)` calls, where `slot` came from `_keys.firstVacant()`. These slots are always `< _keys.capacity`.
-
-BUT: After `_grow()`, the hash table is rebuilt with NEW positions from the NEW slab. The old positions are discarded. No cross-slab position leaking. **This hypothesis is ELIMINATED** for the standard path.
-
-### Hypothesis 4: Hash table `shouldGrow` triggers during Dictionary._grow()
-
-During `Dictionary._grow()`, `newHashTable.insert(__unchecked:...)` is called for each element. This internally calls `shouldGrow` which may trigger `Hash.Table.grow()`. Hash.Table.grow() rehashes but preserves position values. No interaction with `Bit.Vector.Bounded`. **This hypothesis is ELIMINATED**.
-
-### Hypothesis 5: Storage.Slab deinit races with _grow() iteration
-
-During `_grow()`, the old buffer's elements are moved out via `_keys.remove(at:)`. Each remove syncs `storage.bitmap = header.bitmap`. When `_keys = newKeys` drops the old buffer, `Storage.Slab.deinit` iterates `_bitmap.ones` — which should be empty since all elements were removed.
-
-Could there be a timing issue where the old Storage.Slab is deallocated prematurely? In single-threaded code with ARC, this shouldn't happen — `_keys` holds the reference throughout the loop. **Needs empirical validation**.
-
-### Hypothesis 6: The crash is NOT in _grow() but in a subsequent set() call
-
-After `_grow()` completes, `set()` falls through to the insert path. The new `_keys` buffer has elements from the growth rehash. The hash table has those elements' positions. But what if:
-
-- A hash collision causes the `equals` closure to be called with a position that was valid in the OLD slab but doesn't exist in the NEW slab?
-- This can't happen — the new hash table was built from scratch with new positions.
-
-**This hypothesis is ELIMINATED** by construction.
-
-### Hypothesis 7: `firstVacant()` returns a slot from trailing bits
-
-`Bit.Vector.Zeros.Bounded.first(max:)` iterates all words in `_storage` and looks for zero bits via `~word`. If the last word has bits beyond `_count`/`_capacity`, those trailing zeros could produce a `globalIndex >= _capacity`.
-
-The `guard globalIndex < max` check (where `max == _capacity`) prevents this. **BUT** — what if `max` is wrong? `firstVacant()` passes `header.bitmap.capacity.maximum` which is `_capacity`. This matches `_count`. So returned indices are always `< _count`.
-
-**Needs empirical validation** — perhaps `_capacity` is somehow incorrect.
-
-### Hypothesis 8: The conversion chain in `_grow()` capacity computation
+`Dictionary<Key, Value>` uses two independent `Buffer.Slab` instances — `_keys: Buffer<Key>.Slab` and `_values: Buffer<Value>.Slab` — that share a slot namespace. A slot returned by `_keys.firstVacant()` is used to index into BOTH buffers:
 
 ```swift
-let newCapacity = Index_Primitives.Index<Key>.Count(
-    Cardinal(UInt(max(8, Int(bitPattern: _keys.occupancy) * 2)))
-)
+// Dictionary+set.swift:39-43
+guard let slot = _keys.firstVacant() else { fatalError(...) }
+_keys.insert(key, at: slot)
+_values.insert(consume value, at: slot)  // slot must be valid here too
 ```
 
-`Int(bitPattern: _keys.occupancy)` — `_keys.occupancy` is `Bit.Index.Count` (Tagged<Bit, Cardinal>). `Int(bitPattern:)` converts via `Int(bitPattern: UInt)`. For small values (< 1000), this is correct.
+Both slabs are created with the same `minimumCapacity`. However, `ManagedBuffer.create(minimumCapacity:)` rounds up based on **allocation granularity and element stride**. Different element types receive different actual capacities:
 
-`max(8, ...)` → always >= 8. `UInt(...)` → wraps back. `Cardinal(...)` → wraps. `Index<Key>.Count(...)` → wraps. All conversions are safe for small values. **This hypothesis is ELIMINATED**.
+| Element type | Stride | Requested `minimumCapacity` | Actual `slotCapacity` |
+|-------------|--------|-----|---|
+| `String` | 24 bytes | 32 | **36** |
+| `Int` | 8 bytes | 32 | **33** |
 
-### Remaining Hypotheses Requiring Empirical Validation
+The growth trigger only checks `_keys.isFull` (`Dictionary+set.swift:36`). When keys has capacity 36 and values has capacity 33:
 
-| # | Hypothesis | Test |
-|---|-----------|------|
-| H5 | Storage.Slab deinit timing | Print refcount during _grow() |
-| H7 | firstVacant trailing bits | Dump bitmap state at crash point |
-| H9 | Unknown interaction | Minimal reproduction with state dumps |
+1. After 33 inserts: keys `occ=33, cap=36, isFull=false`; values `occ=33, cap=33, isFull=true`
+2. `_keys.isFull` is `false` — no growth triggered
+3. `_keys.firstVacant()` returns slot **33** (valid for keys: 33 < 36)
+4. `_values.insert(value, at: 33)` attempts `header.bitmap[33] = true`
+5. Values bitmap has `_count == _capacity == 33` → `precondition(33 < 33)` FAILS
 
-## Experiment Plan
+### Experiment Evidence
 
-Create an experiment in `swift-dictionary-primitives/Experiments/growth-crash/` that:
+Experiment `growth-crash/` (4 iterations) confirmed this:
 
-1. **Traces ManagedBuffer capacity**: For each growth step, log the requested capacity vs actual `slotCapacity`
-2. **Traces bitmap state**: Before each insert during growth, log `slot`, `_count`, `_capacity`
-3. **Traces firstVacant results**: Log the returned slot index and verify it's within bounds
-4. **Narrows the crash**: Binary search for the exact element count that triggers the crash
-5. **Tests hash-distribution independence**: Use sequential numeric keys to remove hash randomness
+```
+[16] >>> GREW: keys 16→36 vals 17→33
+...
+[33] keys: cap=36 occ=33 full=false
+[33] vals: cap=33 occ=33 full=true
+[33] keysVacant=Optional(33) valsVacant=nil
+[33] probing vals.isOccupied(at: keys_vacant=33)...
+Bit_Vector_Primitives/Bit.Vector.Bounded.swift:144: Precondition failed: Index out of bounds
+```
+
+A direct `Buffer<String>.Slab` test inserting at slot 33 with capacity 36 succeeded — confirming the bug is in Dictionary's dual-buffer slot sharing, not in Buffer.Slab itself.
+
+### Why This Bug Was Hidden Before Phase 2b
+
+This is **NOT** a regression from Phase 2b. The bug exists in the Dictionary design itself — it was present from the moment `Dictionary` was created with separate key/value slabs. Phase 2b restructured `Buffer.Slab` storage but did not change the Dictionary growth logic. The bug simply wasn't triggered until tests exercised >33 elements.
+
+### Eliminated Hypotheses (from v1.0.0)
+
+| # | Hypothesis | Status | Reason |
+|---|-----------|--------|--------|
+| H1 | `_count` vs `_capacity` semantics mismatch | ELIMINATED | `_count == _capacity` is correct for slab bitmaps |
+| H2 | ManagedBuffer rounding creates divergence | **CONFIRMED** — but the divergence is between KEY and VALUE buffers, not within a single buffer |
+| H3 | Hash table position exceeds slab capacity | ELIMINATED | Hash table rebuilt after growth |
+| H4 | Hash table `shouldGrow` interaction | ELIMINATED | No bitmap interaction |
+| H5 | Storage.Slab deinit timing | ELIMINATED | Empirically — crash occurs before growth, not during deinit |
+| H6 | Crash in subsequent set() after _grow() | ELIMINATED | Crash is in the insert path, not post-growth |
+| H7 | firstVacant trailing bits | ELIMINATED | `guard globalIndex < max` is correct |
+| H8 | Conversion chain overflow | ELIMINATED | Small values, conversions are safe |
+
+## Fix Options
+
+### Option A: Dual isFull Check + Constrained firstVacant
+
+Change `set()` to check both buffers:
+```swift
+if _keys.isFull || _values.isFull { _grow() }
+```
+
+And constrain `firstVacant()` to the minimum capacity:
+```swift
+let effectiveCapacity = Bit.Index.Count.min(_keys.capacity, _values.capacity)
+guard let slot = _keys.firstVacant(max: effectiveCapacity) else { ... }
+```
+
+**Requires**: Adding `firstVacant(max:)` to `Buffer.Slab` public API.
+
+| Criterion | Assessment |
+|-----------|-----------|
+| Correctness | Correct — prevents slot overflow in all paths |
+| Minimality | Moderate — changes both `set()` and `_grow()`, adds method to Buffer.Slab |
+| Transparency | Poor — "shared slot space" concern leaks into every Dictionary operation |
+| Efficiency | Neutral — no wasted memory, but redundant min computation on every insert |
+
+### Option B: Dictionary Stores Effective Capacity
+
+Add stored property `_effectiveCapacity: Bit.Index.Count` to Dictionary. Set at init and after `_grow()`.
+
+| Criterion | Assessment |
+|-----------|-----------|
+| Correctness | Correct — centralized tracking |
+| Minimality | Poor — new stored property, must stay in sync |
+| Transparency | Moderate — named concept is clear |
+| Efficiency | Good — one computation per init/grow, cached for reads |
+
+### Option C: Ensure Values Capacity >= Keys Capacity at Construction
+
+After creating the keys slab, use its **actual capacity** as the minimum for the values slab:
+
+```swift
+// Dictionary.init
+self._keys = Buffer<Key>.Slab(minimumCapacity: minimumCapacity)
+self._values = Buffer<Value>.Slab(minimumCapacity: self._keys.capacity.retag(Value.self))
+
+// Dictionary._grow()
+var newKeys = Buffer<Key>.Slab(minimumCapacity: newCapacity)
+var newValues = Buffer<Value>.Slab(minimumCapacity: newKeys.capacity.retag(Value.self))
+```
+
+Since `ManagedBuffer.create(minimumCapacity: N)` always returns capacity >= N, requesting `keys.actualCapacity` for values guarantees `values.capacity >= keys.capacity`. Any slot returned by `_keys.firstVacant()` (which is `< keys.capacity`) is therefore valid for values.
+
+| Criterion | Assessment |
+|-----------|-----------|
+| Correctness | Correct — values always has >= keys capacity; firstVacant on keys returns < keys.capacity |
+| Minimality | **Best** — 2-line change (init + _grow), no new APIs, no new stored properties |
+| Transparency | **Best** — the invariant is established at construction; callers never see capacity divergence |
+| Efficiency | Good — values may allocate slightly more memory than strictly needed, but this is bounded by ManagedBuffer rounding (typically 0-3 extra slots) |
+
+### Option D: Use Fixed (Non-Rounded) Capacity
+
+Override ManagedBuffer rounding by using `minimumCapacity` instead of `slotCapacity` for bitmap creation.
+
+| Criterion | Assessment |
+|-----------|-----------|
+| Correctness | Correct but wasteful — allocated memory goes unused |
+| Minimality | Poor — changes Buffer.Slab initialization for all users, not just Dictionary |
+| Transparency | Moderate — hides the rounding benefit |
+| Efficiency | Bad — wastes allocated memory system-wide |
+
+### Comparison
+
+| Criterion | Option A | Option B | **Option C** | Option D |
+|-----------|----------|----------|--------------|----------|
+| Correctness | Yes | Yes | **Yes** | Yes |
+| Lines changed | ~8 | ~12 | **~4** | ~6 |
+| New public API | Yes (`firstVacant(max:)`) | No | **No** | No |
+| New stored property | No | Yes | **No** | No |
+| Blast radius | Dictionary + Buffer.Slab | Dictionary only | **Dictionary only** | Buffer.Slab (all users) |
+| Memory efficiency | Optimal | Optimal | Near-optimal | Wasteful |
+| Invariant location | Distributed (every insert) | Centralized (stored) | **Structural (at construction)** | Global (all slabs) |
 
 ## Outcome
 
-**Status**: IN_PROGRESS — Awaiting experiment results.
+**Status**: DECISION
+
+**Chosen**: **Option C — Ensure values capacity >= keys capacity at construction.**
+
+**Rationale**: This establishes the invariant structurally — at the two construction sites (`init` and `_grow`). No ongoing bookkeeping, no new APIs, no leaking of the "shared slot space" concern into mutation methods. The invariant is: `_values.capacity >= _keys.capacity`, guaranteed because values is created with `minimumCapacity: keys.actualCapacity`. Since `firstVacant()` always returns `< keys.capacity`, and `keys.capacity <= values.capacity`, every slot is valid for both buffers.
+
+**Implementation**:
+
+1. `Dictionary.init(minimumCapacity:)` — create values with `_keys.capacity` as minimum
+2. `Dictionary._grow()` — create `newValues` with `newKeys.capacity` as minimum
+3. No changes to `set()`, `remove()`, `drain()`, `forEach()`, or any other method
+4. No changes to `Buffer.Slab` or any other package
+
+**Edge cases verified**:
+- Same Key/Value type: same stride → same rounding → no divergence (no-op fix)
+- `minimumCapacity: .zero`: keys gets capacity 0 (or small), values created with that → both match
+- During `_grow()` rehash loop: iterates up to old `_keys.capacity`; old values has >= old keys capacity (by invariant); new values has >= new keys capacity (by fix)
+- `remove()` + re-insert: slot was originally from `_keys.firstVacant()`, valid for both by invariant

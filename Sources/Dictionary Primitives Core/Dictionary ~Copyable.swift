@@ -123,7 +123,10 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
         )
 
         var newKeys = Buffer<Key>.Slab(minimumCapacity: newCapacity)
-        var newValues = Buffer<Value>.Slab(minimumCapacity: newCapacity.retag(Value.self))
+        // Use keys' actual capacity so values.capacity >= keys.capacity.
+        // ManagedBuffer rounds up differently per element stride — without this,
+        // a slot valid for keys could exceed values' bitmap bounds.
+        var newValues = Buffer<Value>.Slab(minimumCapacity: newKeys.capacity.retag(Value.self))
         var newHashTable = Hash.Table<Key>(minimumCapacity: newCapacity)
 
         // Typed while loop: mutating during iteration requires manual control.
