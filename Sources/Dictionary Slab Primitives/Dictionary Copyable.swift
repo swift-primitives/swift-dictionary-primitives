@@ -20,6 +20,17 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
     ///
     /// Copies slab storage at creation for safe iteration independent of mutations.
     /// Visits occupied slots via bitmap iteration.
+    ///
+    /// - Complexity: O(capacity) per full iteration, not O(count). Each `next()` call
+    ///   scans forward through potentially vacant slots. For sparse slabs this is
+    ///   significant. Bitmap-level iteration is not available cross-package
+    ///   (`Buffer.Slab`'s bitmap has `package` access). Bounded by `for-in` borrow
+    ///   semantics in practice.
+    ///
+    /// - Note: The iterator stores shallow reference copies of `Buffer.Slab` storage.
+    ///   Without CoW on unordered `Dictionary` mutations, a stored iterator could observe
+    ///   inconsistent state if the dictionary is mutated between `next()` calls. Safe
+    ///   under `for-in` (borrow semantics prevent mutation during iteration).
     public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         public typealias Element = (key: Key, value: Value)
 

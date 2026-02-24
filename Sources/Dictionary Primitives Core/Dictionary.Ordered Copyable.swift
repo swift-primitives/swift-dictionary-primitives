@@ -107,7 +107,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     public mutating func clear(keepingCapacity: Bool = false) {
         makeUnique()
         _keys.clear(keepingCapacity: keepingCapacity)
-        _values.removeAll()
+        _values.remove.all()
         if !keepingCapacity {
             _values = Buffer<Value>.Linear(minimumCapacity: .zero)
         }
