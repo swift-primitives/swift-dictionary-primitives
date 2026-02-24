@@ -19,13 +19,9 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
     /// Iterator for unordered dictionary.
     ///
     /// Copies slab storage at creation for safe iteration independent of mutations.
-    /// Visits occupied slots via bitmap iteration.
+    /// Visits occupied slots via bitmap iterator (Wegner/Kernighan bit extraction).
     ///
-    /// - Complexity: O(capacity) per full iteration, not O(count). Each `next()` call
-    ///   scans forward through potentially vacant slots. For sparse slabs this is
-    ///   significant. Bitmap-level iteration is not available cross-package
-    ///   (`Buffer.Slab`'s bitmap has `package` access). Bounded by `for-in` borrow
-    ///   semantics in practice.
+    /// - Complexity: O(count) total via bitmap iteration, not O(capacity).
     ///
     /// - Note: The iterator stores shallow reference copies of `Buffer.Slab` storage.
     ///   Without CoW on unordered `Dictionary` mutations, a stored iterator could observe
@@ -41,29 +37,20 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         let _values: Buffer<Value>.Slab
 
         @usableFromInline
-        var _slot: Bit.Index
-
-        @usableFromInline
-        let _capacity: Bit.Index
+        var _occupiedSlots: Bit.Vector.Ones.Bounded.Iterator
 
         @usableFromInline
         init(_ dict: borrowing Dictionary<Key, Value>) {
+            let occupiedSlots = dict._keys.occupiedSlots
             self._keys = dict._keys
             self._values = dict._values
-            self._slot = .zero
-            self._capacity = dict._keys.capacity.map(Ordinal.init)
+            self._occupiedSlots = occupiedSlots.makeIterator()
         }
 
         @inlinable
         public mutating func next() -> Element? {
-            while _slot < _capacity {
-                let current = _slot
-                _slot += .one
-                if _keys.isOccupied(at: current) {
-                    return (key: _keys[current], value: _values[current])
-                }
-            }
-            return nil
+            guard let slot = _occupiedSlots.next() else { return nil }
+            return (key: _keys[slot], value: _values[slot])
         }
     }
 }
