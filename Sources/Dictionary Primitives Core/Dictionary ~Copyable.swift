@@ -44,7 +44,7 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
         } else {
             // Slab deinit handles element cleanup when replaced
             _keys = Buffer<Key>.Slab(minimumCapacity: .zero)
-            _values = Buffer<Value>.Slab(minimumCapacity: .zero)
+            _values = Buffer<Value>.Slab(minimumCapacity: _keys.capacity.retag(Value.self))
             _hashTable.remove.all(keepingCapacity: false)
         }
     }
@@ -53,16 +53,17 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
 // MARK: - forEach (~Copyable)
 
 extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
-    /// Calls the given closure for each key-value pair.
+    /// Non-mutating read-only view for forEach iteration.
     ///
-    /// Elements are visited in no particular order (sparse slot order).
-    /// Uses Wegner/Kernighan bit iteration — O(n) where n is the number of pairs.
+    /// Uses `Property.View.Read` at the Dictionary level (not Slab level)
+    /// so that both `_keys` and `_values` can be accessed through the pointer
+    /// without borrow conflicts.
     ///
-    /// - Parameter body: A closure that receives each key and borrowed value.
+    /// - Complexity: O(n) where n is the number of pairs.
     @inlinable
-    public func forEach(_ body: (Key, borrowing Value) -> Void) {
-        _keys.forEachOccupied { slot in
-            body(_keys[slot], _values[slot])
+    public var forEach: Property<Sequence.ForEach, Self>.View.Read {
+        _read {
+            yield Property<Sequence.ForEach, Self>.View.Read(borrowing: self)
         }
     }
 
@@ -76,15 +77,16 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     @inlinable
     public mutating func drain(_ body: (consuming Entry) -> Void) {
         // Typed while loop: mutating during iteration requires manual control.
-        // The bitmap iteration state is captured by value, so modifications
-        // to the slab during iteration are safe.
+        // Early termination via remaining count avoids scanning vacant tail slots.
         var slot: Bit.Index = .zero
         let end = _keys.capacity.map(Ordinal.init)
-        while slot < end {
+        var remaining = _keys.occupancy
+        while slot < end, remaining != .zero {
             if _keys.isOccupied(at: slot) {
                 let key = _keys.remove(at: slot)
                 let value = _values.remove(at: slot)
                 body(Entry(key: key, value: consume value))
+                remaining = remaining.subtract.saturating(.one)
             }
             slot += .one
         }
@@ -118,8 +120,10 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     /// Follows the Hash.Table.grow() capacity computation pattern.
     @usableFromInline
     mutating func _grow() {
-        let newCapacity = Index_Primitives.Index<Key>.Count(
-            Cardinal(UInt(max(8, Int(bitPattern: _keys.occupancy) * 2)))
+        let occupancy = _keys.occupancy.retag(Key.self)
+        let newCapacity = Index_Primitives.Index<Key>.Count.max(
+            Index_Primitives.Index<Key>.Count(Cardinal(8 as UInt)),
+            occupancy + occupancy
         )
 
         var newKeys = Buffer<Key>.Slab(minimumCapacity: newCapacity)
@@ -130,9 +134,11 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
         var newHashTable = Hash.Table<Key>(minimumCapacity: newCapacity)
 
         // Typed while loop: mutating during iteration requires manual control.
+        // Early termination via remaining count avoids scanning vacant tail slots.
         var slot: Bit.Index = .zero
         let end = _keys.capacity.map(Ordinal.init)
-        while slot < end {
+        var remaining = _keys.occupancy
+        while slot < end, remaining != .zero {
             if _keys.isOccupied(at: slot) {
                 let key = _keys.remove(at: slot)
                 let value = _values.remove(at: slot)
@@ -147,6 +153,7 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
                     position: newSlot.retag(Key.self),
                     hashValue: key.hashValue
                 )
+                remaining = remaining.subtract.saturating(.one)
             }
             slot += .one
         }

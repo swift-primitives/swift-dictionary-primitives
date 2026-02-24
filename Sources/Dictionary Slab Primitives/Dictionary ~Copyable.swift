@@ -40,13 +40,16 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
         @inlinable
         public mutating func callAsFunction(_ body: (consuming Entry) -> Void) {
             // Typed while loop: mutating during iteration requires manual control.
+            // Early termination via remaining count avoids scanning vacant tail slots.
             var slot: Bit.Index = .zero
             let end = unsafe _base.pointee._keys.capacity.map(Ordinal.init)
-            while slot < end {
+            var remaining = unsafe _base.pointee._keys.occupancy
+            while slot < end, remaining != .zero {
                 if unsafe _base.pointee._keys.isOccupied(at: slot) {
                     let key = unsafe _base.pointee._keys.remove(at: slot)
                     let value = unsafe _base.pointee._values.remove(at: slot)
                     body(Entry(key: key, value: consume value))
+                    remaining = remaining.subtract.saturating(.one)
                 }
                 slot += .one
             }
