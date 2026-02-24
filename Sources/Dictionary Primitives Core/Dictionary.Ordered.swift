@@ -11,6 +11,7 @@
 
 public import Set_Primitives
 public import Buffer_Linear_Primitives
+public import Buffer_Slab_Primitives
 public import Index_Primitives
 public import Hash_Table_Primitives
 
@@ -60,11 +61,76 @@ public import Hash_Table_Primitives
 //
 // ===----------------------------------------------------------------------===//
 
-/// Namespace for ordered dictionary types.
+/// An unordered dictionary backed by slab storage with O(1) removal.
+///
+/// `Dictionary` uses hash-indexed sparse slab storage for both keys and values.
+/// Positions are stable across removals — no element shifting occurs.
 ///
 /// This shadows `Swift.Dictionary`. Use `Swift.Dictionary` or module-qualified
 /// `Dictionary_Primitives_Core.Dictionary` to disambiguate when both are in scope.
-public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
+///
+/// ## Variants
+///
+/// - `Dictionary<K, V>()` — unordered, slab-backed, O(1) removal (this type)
+/// - `Dictionary<K, V>.Ordered()` — insertion-ordered, linear-backed, O(n) removal
+///
+/// ## Composition
+///
+/// ```
+/// Dictionary<Key, Value>
+/// ├── _hashTable: Hash.Table<Key>         — hash-to-position lookup
+/// ├── _keys: Buffer<Key>.Slab             — sparse key storage
+/// └── _values: Buffer<Value>.Slab         — sparse value storage
+/// ```
+@safe
+public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
+
+    // MARK: - Storage
+
+    public var _hashTable: Hash.Table<Key>
+
+    public var _keys: Buffer<Key>.Slab
+
+    public var _values: Buffer<Value>.Slab
+
+    // MARK: - Init
+
+    /// Creates an empty unordered dictionary.
+    ///
+    /// - Parameter minimumCapacity: The minimum number of key-value pairs to
+    ///   reserve space for. Defaults to zero.
+    @inlinable
+    public init(minimumCapacity: Index_Primitives.Index<Key>.Count = .zero) {
+        self._hashTable = Hash.Table<Key>(minimumCapacity: minimumCapacity)
+        self._keys = Buffer<Key>.Slab(minimumCapacity: minimumCapacity)
+        self._values = Buffer<Value>.Slab(minimumCapacity: minimumCapacity.retag(Value.self))
+    }
+
+    // Note: No explicit deinit needed — Buffer.Slab handles cleanup via bitmap-driven deinitialization
+
+    // MARK: - Entry (nested to inherit Value's ~Copyable context)
+
+    /// A key-value pair entry from the dictionary.
+    ///
+    /// Supports ~Copyable values, unlike tuples which require Copyable elements.
+    /// Used as the `Element` type for drain operations.
+    public struct Entry: ~Copyable {
+        /// The key of this entry.
+        public let key: Key
+
+        /// The value of this entry.
+        public var value: Value
+
+        /// Creates an entry with the given key and value.
+        @inlinable
+        public init(key: Key, value: consuming Value) {
+            self.key = key
+            self.value = value
+        }
+    }
+
+    // MARK: - Ordered
+
     /// An ordered dictionary that preserves insertion order, supporting move-only values.
     ///
     /// `Ordered` combines the key-value semantics of a dictionary with the ordering
@@ -347,6 +413,9 @@ public enum Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
 // MARK: - Conditional Copyable
 
+/// `Dictionary.Entry` is `Copyable` when its values are `Copyable`.
+extension Dictionary_Primitives_Core.Dictionary.Entry: Copyable where Value: Copyable {}
+
 /// `Dictionary.Ordered` is `Copyable` when its values are `Copyable`.
 ///
 /// This enables value semantics with copy-on-write optimization:
@@ -362,10 +431,19 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Copyable where 
 /// ~Copyable value support for the drain operation.
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Entry: Copyable where Value: Copyable {}
 
-// Note: Dictionary.Ordered.Small and Dictionary.Ordered.Static are UNCONDITIONALLY ~Copyable due to deinit requirement
+/// `Dictionary` (unordered) is `Copyable` when its values are `Copyable`.
+///
+/// This works because when `Value: Copyable`:
+/// - `Hash.Table<Key>`: already conditionally Copyable
+/// - `Buffer<Key>.Slab`: Copyable (Key is always Copyable via `Hash.Protocol`)
+/// - `Buffer<Value>.Slab`: Copyable when Value: Copyable
+extension Dictionary_Primitives_Core.Dictionary: Copyable where Value: Copyable {}
+
+// Note: Dictionary.Ordered.Small and Dictionary.Ordered.Static are UNCONDITIONALLY ~Copyable due to inline storage deinit
 
 // MARK: - Sendable
 
+extension Dictionary_Primitives_Core.Dictionary: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Static: @unchecked Sendable where Key: Sendable, Value: Sendable {}

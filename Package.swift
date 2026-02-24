@@ -39,6 +39,7 @@ let package = Package(
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Slab Primitives", package: "swift-buffer-primitives"),
             ]
         ),
         // Variant: Swift.Sequence/Collection for Dictionary.Ordered (Value: Copyable)
@@ -59,6 +60,15 @@ let package = Package(
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
             ]
         ),
+        // Variant: Swift.Sequence, Drain, Subscript for Dictionary (Value: Copyable)
+        .target(
+            name: "Dictionary Slab Primitives",
+            dependencies: [
+                "Dictionary Primitives Core",
+                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Property Primitives", package: "swift-property-primitives"),
+            ]
+        ),
         // Public: Re-exports Core, Variants, and Sequence for users
         .target(
             name: "Dictionary Primitives",
@@ -66,6 +76,7 @@ let package = Package(
                 "Dictionary Primitives Core",
                 "Dictionary Ordered Primitives",
                 "Dictionary Bounded Primitives",
+                "Dictionary Slab Primitives",
             ]
         ),
         .testTarget(
