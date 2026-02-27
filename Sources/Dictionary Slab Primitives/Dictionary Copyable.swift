@@ -40,6 +40,9 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         var _occupiedSlots: Bit.Vector.Ones.Bounded.Iterator
 
         @usableFromInline
+        var _spanBuffer: [Element] = []
+
+        @usableFromInline
         init(_ dict: borrowing Dictionary<Key, Value>) {
             let occupiedSlots = dict._keys.occupiedSlots
             self._keys = dict._keys
@@ -47,6 +50,19 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
             self._occupiedSlots = occupiedSlots.makeIterator()
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, let slot = _occupiedSlots.next() {
+                _spanBuffer.append((key: _keys[slot], value: _values[slot]))
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard let slot = _occupiedSlots.next() else { return nil }

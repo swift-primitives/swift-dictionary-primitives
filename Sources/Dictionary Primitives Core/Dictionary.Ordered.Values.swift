@@ -182,12 +182,29 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
         let _count: Index_Primitives.Index<Key>.Count
 
         @usableFromInline
+        var _spanBuffer: [Value] = []
+
+        @usableFromInline
         init(_ dict: Dictionary<Key, Value>.Ordered) {
             self._values = dict._values
             self._index = .zero
             self._count = dict.count
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Value> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _index < _count {
+                _spanBuffer.append(_values[_index.retag(Value.self)])
+                _index = _index + .one
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Value? {
             guard _index < _count else { return nil }

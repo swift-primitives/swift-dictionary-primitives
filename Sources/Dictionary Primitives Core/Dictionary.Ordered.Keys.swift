@@ -110,6 +110,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys: Swift.Sequence {
             self.base = keys.makeIterator()
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Key> {
+            base.nextSpan(maximumCount: maximumCount)
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Key? {
             base.next()

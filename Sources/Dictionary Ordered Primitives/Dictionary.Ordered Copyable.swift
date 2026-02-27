@@ -33,6 +33,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
         let _count: Index_Primitives.Index<Key>.Count
 
         @usableFromInline
+        var _spanBuffer: [Element] = []
+
+        @usableFromInline
         init(_ dict: borrowing Dictionary<Key, Value>.Ordered) {
             self._keys = dict._keys
             self._values = dict._values
@@ -40,6 +43,22 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
             self._count = dict.count
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _index < _count {
+                let key = _keys[_index]
+                let value = _values[_index.retag(Value.self)]
+                _index = _index + .one
+                _spanBuffer.append((key, value))
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _index < _count else { return nil }

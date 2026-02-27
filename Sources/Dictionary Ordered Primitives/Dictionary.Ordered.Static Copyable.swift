@@ -42,12 +42,31 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
         var _position: Index_Primitives.Index<Key> = .zero
 
         @usableFromInline
+        var _spanBuffer: [Element] = []
+
+        @usableFromInline
         init(keys: Buffer<Key>.Linear, values: Buffer<Value>.Linear) {
             self._keys = keys
             self._values = values
             self._end = keys.count
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _position < _end {
+                let key = _keys[_position]
+                let value = _values[_position.retag(Value.self)]
+                _position += .one
+                _spanBuffer.append((key, value))
+                remaining -= 1
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _position < _end else { return nil }
