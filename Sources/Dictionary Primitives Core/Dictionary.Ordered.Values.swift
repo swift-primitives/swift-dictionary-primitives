@@ -173,50 +173,29 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values {
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
     public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
-        let _values: Buffer<Value>.Linear
+        var _inner: Buffer<Value>.Linear.Iterator
 
         @usableFromInline
-        var _index: Index_Primitives.Index<Key>
-
-        @usableFromInline
-        let _count: Index_Primitives.Index<Key>.Count
-
-        @usableFromInline
-        var _spanBuffer: [Value] = []
-
-        @usableFromInline
-        init(_ dict: Dictionary<Key, Value>.Ordered) {
-            self._values = dict._values
-            self._index = .zero
-            self._count = dict.count
+        init(_inner: Buffer<Value>.Linear.Iterator) {
+            self._inner = _inner
         }
 
         @_lifetime(&self)
         @inlinable
         public mutating func nextSpan(maximumCount: Cardinal) -> Span<Value> {
-            _spanBuffer.removeAll(keepingCapacity: true)
-            var remaining = Int(maximumCount.rawValue)
-            while remaining > 0, _index < _count {
-                _spanBuffer.append(_values[_index.retag(Value.self)])
-                _index = _index + .one
-                remaining -= 1
-            }
-            return _spanBuffer.span
+            _inner.nextSpan(maximumCount: maximumCount)
         }
 
         @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Value? {
-            guard _index < _count else { return nil }
-            let value = _values[_index.retag(Value.self)]
-            _index = _index + .one
-            return value
+            _inner.next()
         }
     }
 
     @inlinable
     public func makeIterator() -> Iterator {
-        Iterator(dict)
+        Iterator(_inner: dict._values.makeIterator())
     }
 }
 
