@@ -26,6 +26,11 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: Copya
     ///
     /// Copies keys and values to `Buffer.Linear` snapshots for safe iteration,
     /// avoiding pointer escape issues with inline storage.
+    ///
+    /// - Note: Uses `_spanBuffer` for tuple accumulation. The underlying
+    ///   `_keys` and `_values` snapshots are contiguous `Buffer.Linear`s —
+    ///   composing two `Buffer.Linear.Iterator`s could eliminate the buffer,
+    ///   but tuple packaging prevents direct delegation.
     public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         public typealias Element = (key: Key, value: Value)
 
