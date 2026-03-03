@@ -37,10 +37,10 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     ///   - pairs: The key-value pairs.
     ///   - combine: A closure that receives the existing and new values, returning the value to keep.
     @inlinable
-    public init(
+    public init<E: Swift.Error>(
         _ pairs: some Swift.Sequence<(Key, Value)>,
-        uniquingKeysWith combine: (Value, Value) throws -> Value
-    ) rethrows {
+        uniquingKeysWith combine: (Value, Value) throws(E) -> Value
+    ) throws(E) {
         self.init()
         for (key, value) in pairs {
             if let existingKeyIndex = _keys.index(key) {
