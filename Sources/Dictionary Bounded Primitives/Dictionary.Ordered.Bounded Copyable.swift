@@ -33,7 +33,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
         let _count: Index_Primitives.Index<Key>.Count
 
         @usableFromInline
-        var _spanBuffer: [Element] = []
+        var _element: Element? = nil
 
         @usableFromInline
         init(_ dict: borrowing Dictionary<Key, Value>.Ordered.Bounded) {
@@ -46,16 +46,22 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: Cop
         @_lifetime(&self)
         @inlinable
         public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            _spanBuffer.removeAll(keepingCapacity: true)
-            var remaining = Int(maximumCount.rawValue)
-            while remaining > 0, _index < _count {
-                let key = _keys[_index]
-                let value = _values[_index.retag(Value.self)]
-                _index = _index + .one
-                _spanBuffer.append((key, value))
-                remaining -= 1
+            let ptr = unsafe withUnsafeMutablePointer(to: &_element) { p in
+                unsafe UnsafePointer<Element>(
+                    unsafe UnsafeRawPointer(p).assumingMemoryBound(to: Element.self)
+                )
             }
-            return _spanBuffer.span
+            guard maximumCount > .zero else {
+                let span = unsafe Span(_unsafeStart: ptr, count: 0)
+                return unsafe _overrideLifetime(span, mutating: &self)
+            }
+            guard let value = next() else {
+                let span = unsafe Span(_unsafeStart: ptr, count: 0)
+                return unsafe _overrideLifetime(span, mutating: &self)
+            }
+            _element = value
+            let span = unsafe Span(_unsafeStart: ptr, count: 1)
+            return unsafe _overrideLifetime(span, mutating: &self)
         }
 
         @_lifetime(self: immortal)

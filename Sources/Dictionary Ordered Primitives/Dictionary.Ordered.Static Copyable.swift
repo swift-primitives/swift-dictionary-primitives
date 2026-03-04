@@ -27,8 +27,8 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
     /// Copies keys and values to `Buffer.Linear` snapshots for safe iteration,
     /// avoiding pointer escape issues with inline storage.
     ///
-    /// - Note: Uses `_spanBuffer` for tuple accumulation. The underlying
-    ///   `_keys` and `_values` snapshots are contiguous `Buffer.Linear`s —
+    /// - Note: Uses `_element` for single-element Optional inline span production.
+    ///   The underlying `_keys` and `_values` snapshots are contiguous `Buffer.Linear`s —
     ///   composing two `Buffer.Linear.Iterator`s could eliminate the buffer,
     ///   but tuple packaging prevents direct delegation.
     public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
@@ -47,7 +47,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
         var _position: Index_Primitives.Index<Key> = .zero
 
         @usableFromInline
-        var _spanBuffer: [Element] = []
+        var _element: Element? = nil
 
         @usableFromInline
         init(keys: Buffer<Key>.Linear, values: Buffer<Value>.Linear) {
@@ -59,16 +59,22 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
         @_lifetime(&self)
         @inlinable
         public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            _spanBuffer.removeAll(keepingCapacity: true)
-            var remaining = Int(maximumCount.rawValue)
-            while remaining > 0, _position < _end {
-                let key = _keys[_position]
-                let value = _values[_position.retag(Value.self)]
-                _position += .one
-                _spanBuffer.append((key, value))
-                remaining -= 1
+            let ptr = unsafe withUnsafeMutablePointer(to: &_element) { p in
+                unsafe UnsafePointer<Element>(
+                    unsafe UnsafeRawPointer(p).assumingMemoryBound(to: Element.self)
+                )
             }
-            return _spanBuffer.span
+            guard maximumCount > .zero else {
+                let span = unsafe Span(_unsafeStart: ptr, count: 0)
+                return unsafe _overrideLifetime(span, mutating: &self)
+            }
+            guard let value = next() else {
+                let span = unsafe Span(_unsafeStart: ptr, count: 0)
+                return unsafe _overrideLifetime(span, mutating: &self)
+            }
+            _element = value
+            let span = unsafe Span(_unsafeStart: ptr, count: 1)
+            return unsafe _overrideLifetime(span, mutating: &self)
         }
 
         @_lifetime(self: immortal)
