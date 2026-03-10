@@ -297,120 +297,6 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
             // Note: No deinit needed - Buffer.Linear.Bounded handles cleanup
         }
 
-        // MARK: - Inline Variant
-
-        /// A fixed-capacity, inline-storage ordered dictionary with compile-time capacity.
-        ///
-        /// `Dictionary.Ordered.Static` stores elements directly within the struct's memory layout,
-        /// requiring no heap allocation. The capacity is specified as a compile-time
-        /// generic parameter.
-        ///
-        /// - Note: This type is declared inside `Ordered` (not in an extension) due to a
-        ///   Swift compiler bug where nested types with value generic parameters declared
-        ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-        public struct Static<let capacity: Int>: ~Copyable {
-            /// Value storage using Buffer.Linear.Inline from buffer-primitives.
-            @usableFromInline
-            package var _values: Buffer<Value>.Linear.Inline<capacity>
-
-            /// Dense key storage using Buffer.Linear.Inline.
-            @usableFromInline
-            package var _keys: Buffer<Key>.Linear.Inline<capacity>
-
-            /// Hash table for O(1) key lookup via open-addressed linear probing.
-            /// Capacity must be a power of two.
-            @usableFromInline
-            package var _hashTable: Hash.Table<Key>.Static<capacity>
-
-            /// Creates an empty inline ordered dictionary.
-            /// - Note: `capacity` must be a power of two (hash table requirement).
-            @inlinable
-            public init() {
-                self._values = Buffer<Value>.Linear.Inline<capacity>()
-                self._keys = Buffer<Key>.Linear.Inline<capacity>()
-                self._hashTable = Hash.Table<Key>.Static<capacity>()
-            }
-
-            // No deinit needed — Storage.Inline's deinit handles element cleanup
-            // via per-slot bit-vector tracking. This type is already unconditionally
-            // ~Copyable because it contains @_rawLayout storage.
-        }
-
-        // MARK: - Small Variant
-
-        /// An ordered dictionary with small-buffer optimization (SmallVec pattern).
-        ///
-        /// `Dictionary.Ordered.Small` stores up to `inlineCapacity` elements in inline storage,
-        /// then automatically spills to heap storage when that capacity is exceeded.
-        /// This provides the performance benefits of inline storage for common cases
-        /// while supporting unbounded growth.
-        ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// var dict = Dictionary<String, Int>.Ordered.Small<4>()  // Inline up to 4 elements
-        /// dict.set("a", 1)  // Inline
-        /// dict.set("b", 2)  // Inline
-        /// dict.set("c", 3)  // Inline
-        /// dict.set("d", 4)  // Inline
-        /// dict.set("e", 5)  // Spills to heap, moves all elements
-        /// ```
-        ///
-        /// ## Non-Copyable
-        ///
-        /// `Dictionary.Ordered.Small` is unconditionally `~Copyable` (move-only) because it requires
-        /// a deinitializer to clean up inline storage.
-        ///
-        /// - Note: This type is declared inside `Ordered` (not in an extension) due to a
-        ///   Swift compiler bug where nested types with value generic parameters declared
-        ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-        @safe
-        public struct Small<let inlineCapacity: Int>: ~Copyable {
-            /// Value storage using Buffer.Linear.Small — handles inline/heap dispatch internally.
-            @usableFromInline
-            package var _values: Buffer<Value>.Linear.Small<inlineCapacity>
-
-            /// Dense key storage for inline mode.
-            @usableFromInline
-            package var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
-
-            @usableFromInline
-            package var _count: Index_Primitives.Index<Key>.Count
-
-            /// Heap storage for keys when spilled. Nil when using inline storage.
-            @usableFromInline
-            package var _heapKeys: Set<Key>.Ordered?
-
-            /// Creates an empty small ordered dictionary.
-            @inlinable
-            public init() {
-                self._values = Buffer<Value>.Linear.Small<inlineCapacity>()
-                self._inlineKeys = Buffer<Key>.Linear.Inline<inlineCapacity>()
-                self._count = .zero
-                self._heapKeys = nil
-            }
-
-            // No deinit needed — Buffer.Linear.Small handles cleanup for both
-            // inline and heap modes. This type is already unconditionally ~Copyable
-            // because it contains @_rawLayout storage.
-
-            /// Whether the dictionary is currently using heap storage.
-            @inlinable
-            public var isSpilled: Bool { _heapKeys != nil }
-
-            /// Spills inline key storage to heap.
-            @usableFromInline
-            mutating func _spillKeysToHeap() {
-                precondition(_heapKeys == nil, "Already spilled")
-
-                var heapKeys = Set<Key>.Ordered()
-                _inlineKeys.forEach { key in
-                    heapKeys.insert(key)
-                }
-                _heapKeys = heapKeys
-                _inlineKeys.removeAll()
-            }
-        }
     }
 }
 
@@ -449,8 +335,6 @@ extension Dictionary_Primitives_Core.Dictionary: Copyable where Value: Copyable 
 extension Dictionary_Primitives_Core.Dictionary: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Static: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Small: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 
 // MARK: - Swift.Sequence/Collection Conformances
 //
