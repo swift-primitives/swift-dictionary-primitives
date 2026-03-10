@@ -57,6 +57,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         @usableFromInline
         package var _heapKeys: Set<Key>.Ordered?
 
+        // WORKAROUND: Forces compiler to execute deinit body.
+        // TRACKING: swiftlang/swift #86652 variant (nested ~Copyable deinit chain)
+        // WHEN TO REMOVE: When the compiler correctly destroys ~Copyable structs
+        //      with cross-package value-generic stored properties.
+        private var _deinitWorkaround: AnyObject? = nil
+
         /// Creates an empty small ordered dictionary.
         @inlinable
         public init() {
@@ -66,9 +72,16 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
             self._heapKeys = nil
         }
 
-        // No deinit needed — Buffer.Linear.Small handles cleanup for both
-        // inline and heap modes. This type is already unconditionally ~Copyable
-        // because it contains @_rawLayout storage.
+        deinit {
+            // WORKAROUND: Manually clean up elements via the mutating path.
+            // TRACKING: swiftlang/swift #86652 variant
+            unsafe withUnsafePointer(to: _values) { ptr in
+                unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+            }
+            unsafe withUnsafePointer(to: _inlineKeys) { ptr in
+                unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+            }
+        }
 
         /// Whether the dictionary is currently using heap storage.
         @inlinable
