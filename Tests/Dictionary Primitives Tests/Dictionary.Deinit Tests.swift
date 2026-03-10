@@ -17,7 +17,7 @@ struct DictionaryDeinitTests {
 
     final class Tracker: @unchecked Sendable {
         private var _storage: [Int] = []
-        var deinitCount: Int { _storage.count }
+        var count: Int { _storage.count }
         func append(_ id: Int) { _storage.append(id) }
     }
 
@@ -39,7 +39,7 @@ struct DictionaryDeinitTests {
             try! dict.set("b", TrackedValue(2, tracker: tracker))
             try! dict.set("c", TrackedValue(3, tracker: tracker))
         }
-        #expect(tracker.deinitCount == 3)
+        #expect(tracker.count == 3)
     }
 
     @Test
@@ -60,7 +60,7 @@ struct DictionaryDeinitTests {
             dict.set("b", TrackedValue(2, tracker: tracker))
             dict.set("c", TrackedValue(3, tracker: tracker))
         }
-        #expect(tracker.deinitCount == 3)
+        #expect(tracker.count == 3)
     }
 
     @Test
@@ -74,7 +74,7 @@ struct DictionaryDeinitTests {
             dict.set("c", TrackedValue(3, tracker: tracker))
             dict.set("d", TrackedValue(4, tracker: tracker))
         }
-        #expect(tracker.deinitCount == 4)
+        #expect(tracker.count == 4)
     }
 
     @Test
