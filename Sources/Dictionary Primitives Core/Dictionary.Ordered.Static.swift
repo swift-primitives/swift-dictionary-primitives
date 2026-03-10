@@ -35,6 +35,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         @usableFromInline
         package var _hashTable: Hash.Table<Key>.Static<capacity>
 
+        // WORKAROUND: Forces compiler to execute deinit body.
+        // TRACKING: swiftlang/swift #86652 variant (nested ~Copyable deinit chain)
+        // WHEN TO REMOVE: When the compiler correctly destroys ~Copyable structs
+        //      with cross-package value-generic stored properties.
+        private var _deinitWorkaround: AnyObject? = nil
+
         /// Creates an empty inline ordered dictionary.
         /// - Note: `capacity` must be a power of two (hash table requirement).
         @inlinable
@@ -44,9 +50,16 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
             self._hashTable = Hash.Table<Key>.Static<capacity>()
         }
 
-        // No deinit needed — Storage.Inline's deinit handles element cleanup
-        // via per-slot bit-vector tracking. This type is already unconditionally
-        // ~Copyable because it contains @_rawLayout storage.
+        deinit {
+            // WORKAROUND: Manually clean up elements via the mutating path.
+            // TRACKING: swiftlang/swift #86652 variant
+            unsafe withUnsafePointer(to: _values) { ptr in
+                unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+            }
+            unsafe withUnsafePointer(to: _keys) { ptr in
+                unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+            }
+        }
     }
 }
 
