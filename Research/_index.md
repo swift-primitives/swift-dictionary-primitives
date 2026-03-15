@@ -7,3 +7,4 @@
 | [dictionary-discipline-boundary-analysis](dictionary-discipline-boundary-analysis.md) | Audit of what semantics belong solely to the dictionary layer vs lower layers | 2026-02-14 | RECOMMENDATION |
 | [dictionary-operations-audit](dictionary-operations-audit.md) | Inventory of all public operations mapped against canonical Dictionary/Map ADT | 2026-02-16 | RECOMMENDATION |
 | [dictionary-removal-strategies](dictionary-removal-strategies.md) | O(1) removal strategies: swap-remove, slab-backed, linked-backed | 2026-02-24 | RECOMMENDATION |
+| [dictionary-growth-crash](dictionary-growth-crash.md) | Dictionary growth crash investigation | 2026-02-24 | DECISION |
