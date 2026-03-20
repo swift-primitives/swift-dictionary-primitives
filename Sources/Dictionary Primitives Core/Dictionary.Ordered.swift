@@ -9,130 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Set_Primitives
-public import Buffer_Linear_Primitives
-public import Buffer_Slab_Primitives
-public import Index_Primitives
-public import Hash_Table_Primitives
-
-// ===----------------------------------------------------------------------===//
-// MARK: - Semantic Invariants
-// ===----------------------------------------------------------------------===//
-//
-// This section documents the fundamental invariants that define Dictionary.Ordered.
-// These invariants MUST be preserved by all implementations, optimizations, and
-// future modifications.
-//
-// ## Canonical Ordering
-//
-// Key order is canonical. Values are strictly indexed by key order.
-//
-// - The ordered key set (`_keys: Set<Key>.Ordered`) is the source of truth for ordering
-// - Value storage indices correspond 1:1 with key indices
-// - `_keys[i]` and `_values[i]` always refer to the same key-value pair
-//
-// ## Ordering Semantics
-//
-// - Insertion appends to end: new keys always go to index `count`
-// - Update preserves position: changing a value for existing key does NOT move it
-// - Removal shifts indices: removing key at index `i` shifts all keys at `i+1...` down
-// - Re-insertion after removal goes to end: removed keys lose their position
-//
-// ## What Must Never Happen
-//
-// - Key and value arrays must never have different counts
-// - Key at index `i` must always map to value at index `i`
-// - Duplicate keys must never exist (enforced by Set<Key>.Ordered)
-// - Value storage must never contain uninitialized memory within `0..<count`
-//
-// ## What Optimizations Must Preserve
-//
-// - Iteration order equals insertion order (minus removals)
-// - Index-based access is O(1)
-// - Key lookup is O(1) average (hash-based)
-// - Equality considers order: `[a:1, b:2] != [b:2, a:1]`
-//
-// ## Copyable Boundaries
-//
-// - Keys must conform to Hash.Protocol (supports ~Copyable keys)
-// - Values may be ~Copyable (move-only)
-// - Copy-on-Write only applies when Value: Copyable
-// - Base methods use `consuming Value`; CoW methods use `Value`
-//
-// ===----------------------------------------------------------------------===//
-
-/// An unordered dictionary backed by slab storage with O(1) removal.
-///
-/// `Dictionary` uses hash-indexed sparse slab storage for both keys and values.
-/// Positions are stable across removals — no element shifting occurs.
-///
-/// This shadows `Swift.Dictionary`. Use `Swift.Dictionary` or module-qualified
-/// `Dictionary_Primitives_Core.Dictionary` to disambiguate when both are in scope.
-///
-/// ## Variants
-///
-/// - `Dictionary<K, V>()` — unordered, slab-backed, O(1) removal (this type)
-/// - `Dictionary<K, V>.Ordered()` — insertion-ordered, linear-backed, O(n) removal
-///
-/// ## Composition
-///
-/// ```
-/// Dictionary<Key, Value>
-/// ├── _hashTable: Hash.Table<Key>         — hash-to-position lookup
-/// ├── _keys: Buffer<Key>.Slab             — sparse key storage
-/// └── _values: Buffer<Value>.Slab         — sparse value storage
-/// ```
-@safe
-public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
-
-    // MARK: - Storage
-
-    public var _hashTable: Hash.Table<Key>
-
-    public var _keys: Buffer<Key>.Slab
-
-    public var _values: Buffer<Value>.Slab
-
-    // MARK: - Init
-
-    /// Creates an empty unordered dictionary.
-    ///
-    /// - Parameter minimumCapacity: The minimum number of key-value pairs to
-    ///   reserve space for. Defaults to zero.
-    @inlinable
-    public init(minimumCapacity: Index_Primitives.Index<Key>.Count = .zero) {
-        self._hashTable = Hash.Table<Key>(minimumCapacity: minimumCapacity)
-        self._keys = Buffer<Key>.Slab(minimumCapacity: minimumCapacity)
-        // Use keys' actual capacity so values.capacity >= keys.capacity.
-        // ManagedBuffer rounds up differently per element stride — without this,
-        // a slot valid for keys could exceed values' bitmap bounds.
-        self._values = Buffer<Value>.Slab(minimumCapacity: self._keys.capacity.retag(Value.self))
-    }
-
-    // Note: No explicit deinit needed — Buffer.Slab handles cleanup via bitmap-driven deinitialization
-
-    // MARK: - Entry (nested to inherit Value's ~Copyable context)
-
-    /// A key-value pair entry from the dictionary.
-    ///
-    /// Supports ~Copyable values, unlike tuples which require Copyable elements.
-    /// Used as the `Element` type for drain operations.
-    public struct Entry: ~Copyable {
-        /// The key of this entry.
-        public let key: Key
-
-        /// The value of this entry.
-        public var value: Value
-
-        /// Creates an entry with the given key and value.
-        @inlinable
-        public init(key: Key, value: consuming Value) {
-            self.key = key
-            self.value = value
-        }
-    }
-
-    // MARK: - Ordered
+extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
 
     /// An ordered dictionary that preserves insertion order, supporting move-only values.
     ///
@@ -203,30 +80,6 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
     @safe
     public struct Ordered: ~Copyable {
 
-        // MARK: - Entry (nested to inherit Value's ~Copyable context)
-
-        /// A key-value pair entry from the dictionary.
-        ///
-        /// This struct supports ~Copyable values, unlike tuples which require Copyable elements.
-        /// Used as the `Element` type for `Sequence.Drain.Protocol` conformance.
-        ///
-        /// Entry is conditionally Copyable when Value is Copyable, enabling Swift.Sequence
-        /// conformance while preserving ~Copyable value support.
-        public struct Entry: ~Copyable {
-            /// The key of this entry.
-            public let key: Key
-
-            /// The value of this entry.
-            public var value: Value
-
-            /// Creates an entry with the given key and value.
-            @inlinable
-            public init(key: Key, value: consuming Value) {
-                self.key = key
-                self.value = value
-            }
-        }
-
         // MARK: - Value Storage
         //
         // Uses Buffer<Value>.Linear from Buffer Linear Primitives for value storage.
@@ -247,63 +100,10 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
         }
 
         // Note: No deinit needed - Buffer.Linear handles cleanup
-
-        // MARK: - Bounded Variant
-
-        /// A fixed-capacity ordered dictionary that throws on overflow.
-        ///
-        /// `Dictionary.Ordered.Bounded` allocates storage upfront and throws when
-        /// inserting a key-value pair would exceed the capacity.
-        ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// var dict = try Dictionary<String, Int>.Ordered.Bounded(capacity: 10)
-        /// try dict.set("apple", 1)
-        /// try dict.set("banana", 2)
-        /// dict["apple"]  // Optional(1)
-        /// ```
-        ///
-        /// ## Move-Only Support
-        ///
-        /// Both the dictionary and its values can be `~Copyable`:
-        ///
-        /// ```swift
-        /// struct FileHandle: ~Copyable { ... }
-        /// var dict = try Dictionary<String, FileHandle>.Ordered.Bounded(capacity: 5)
-        /// try dict.set("primary", FileHandle())
-        /// ```
-        @safe
-        public struct Bounded: ~Copyable {
-            public var _keys: Set<Key>.Ordered
-
-            public var _values: Buffer<Value>.Linear.Bounded
-
-            /// The maximum number of key-value pairs the dictionary can hold.
-            public let capacity: Index_Primitives.Index<Key>.Count
-
-            /// Creates a bounded ordered dictionary with the specified capacity.
-            ///
-            /// - Parameter capacity: Maximum number of pairs. Must be non-negative.
-            /// - Throws: ``Dictionary/Ordered/Bounded/Error/invalidCapacity`` if capacity is negative.
-            @inlinable
-            public init(capacity: Index_Primitives.Index<Key>.Count) throws(Dictionary.Ordered.Bounded.Error) {
-                self._keys = Set<Key>.Ordered()
-                self._keys.reserve(capacity)
-                self._values = Buffer<Value>.Linear.Bounded(minimumCapacity: capacity.retag(Value.self))
-                self.capacity = capacity
-            }
-
-            // Note: No deinit needed - Buffer.Linear.Bounded handles cleanup
-        }
-
     }
 }
 
-// MARK: - Conditional Copyable
-
-/// `Dictionary.Entry` is `Copyable` when its values are `Copyable`.
-extension Dictionary_Primitives_Core.Dictionary.Entry: Copyable where Value: Copyable {}
+// MARK: - Conditional Conformances
 
 /// `Dictionary.Ordered` is `Copyable` when its values are `Copyable`.
 ///
@@ -311,38 +111,6 @@ extension Dictionary_Primitives_Core.Dictionary.Entry: Copyable where Value: Cop
 /// copies share storage until mutation.
 extension Dictionary_Primitives_Core.Dictionary.Ordered: Copyable where Value: Copyable {}
 
-/// `Dictionary.Ordered.Bounded` is `Copyable` when its values are `Copyable`.
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: Copyable where Value: Copyable {}
-
-/// `Dictionary.Ordered.Entry` is `Copyable` when its values are `Copyable`.
-///
-/// This enables Entry to be used as Swift.Sequence.Element while preserving
-/// ~Copyable value support for the drain operation.
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Entry: Copyable where Value: Copyable {}
-
-/// `Dictionary` (unordered) is `Copyable` when its values are `Copyable`.
-///
-/// This works because when `Value: Copyable`:
-/// - `Hash.Table<Key>`: already conditionally Copyable
-/// - `Buffer<Key>.Slab`: Copyable (Key is always Copyable via `Hash.Protocol`)
-/// - `Buffer<Value>.Slab`: Copyable when Value: Copyable
-extension Dictionary_Primitives_Core.Dictionary: Copyable where Value: Copyable {}
-
-// Note: Dictionary.Ordered.Small and Dictionary.Ordered.Static are UNCONDITIONALLY ~Copyable due to inline storage deinit
-
 // MARK: - Sendable
 
-extension Dictionary_Primitives_Core.Dictionary: @unchecked Sendable where Key: Sendable, Value: Sendable {}
 extension Dictionary_Primitives_Core.Dictionary.Ordered: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded: @unchecked Sendable where Key: Sendable, Value: Sendable {}
-
-// MARK: - Swift.Sequence/Collection Conformances
-//
-// Per [REFACTOR-002]: Swift.Sequence and Collection conformances are in separate variant modules
-// to avoid constraint poisoning. These protocols implicitly require Element: Copyable.
-//
-// Variant modules:
-// - Dictionary Ordered Primitives: Swift.Sequence, Collection, BidirectionalCollection, RandomAccessCollection
-// - Dictionary Bounded Primitives: Swift.Sequence
-//
-// For ~Copyable values, use forEach(_:) or drain(_:).
