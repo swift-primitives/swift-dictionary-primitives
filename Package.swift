@@ -15,7 +15,11 @@ let package = Package(
         .library(
             name: "Dictionary Primitives",
             targets: ["Dictionary Primitives"]
-        )
+        ),
+        .library(
+            name: "Dictionary Primitives Test Support",
+            targets: ["Dictionary Primitives Test Support"]
+        ),
     ],
     dependencies: [
         .package(path: "../swift-set-primitives"),
@@ -29,7 +33,8 @@ let package = Package(
         .package(path: "../swift-buffer-primitives"),
     ],
     targets: [
-        // Internal: Core types with ~Copyable support (no Sequence/Collection conformances)
+
+        // MARK: - Core
         .target(
             name: "Dictionary Primitives Core",
             dependencies: [
@@ -42,7 +47,8 @@ let package = Package(
                 .product(name: "Buffer Slab Primitives", package: "swift-buffer-primitives"),
             ]
         ),
-        // Variant: Swift.Sequence/Collection for Dictionary.Ordered (Value: Copyable)
+
+        // MARK: - Ordered
         .target(
             name: "Dictionary Ordered Primitives",
             dependencies: [
@@ -52,7 +58,8 @@ let package = Package(
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
-        // Variant: Swift.Sequence/Collection for Dictionary.Ordered.Bounded (Value: Copyable)
+
+        // MARK: - Bounded
         .target(
             name: "Dictionary Bounded Primitives",
             dependencies: [
@@ -60,7 +67,8 @@ let package = Package(
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
             ]
         ),
-        // Variant: Swift.Sequence, Drain, Subscript for Dictionary (Value: Copyable)
+
+        // MARK: - Slab
         .target(
             name: "Dictionary Slab Primitives",
             dependencies: [
@@ -69,7 +77,8 @@ let package = Package(
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
-        // Public: Re-exports Core, Variants, and Sequence for users
+
+        // MARK: - Umbrella
         .target(
             name: "Dictionary Primitives",
             dependencies: [
@@ -79,6 +88,8 @@ let package = Package(
                 "Dictionary Slab Primitives",
             ]
         ),
+
+        // MARK: - Tests
         .testTarget(
             name: "Dictionary Primitives Tests",
             dependencies: [
@@ -86,7 +97,24 @@ let package = Package(
                 .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
                 .product(name: "Identity Primitives Test Support", package: "swift-identity-primitives"),
             ]
-        )
+        ),
+
+        // MARK: - Test Support
+        .target(
+            name: "Dictionary Primitives Test Support",
+            dependencies: [
+                "Dictionary Primitives",
+                .product(name: "Set Primitives Test Support", package: "swift-set-primitives"),
+                .product(name: "Hash Table Primitives Test Support", package: "swift-hash-table-primitives"),
+                .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
+                .product(name: "Identity Primitives Test Support", package: "swift-identity-primitives"),
+                .product(name: "Collection Primitives Test Support", package: "swift-collection-primitives"),
+                .product(name: "Input Primitives Test Support", package: "swift-input-primitives"),
+                .product(name: "Sequence Primitives Test Support", package: "swift-sequence-primitives"),
+                .product(name: "Buffer Primitives Test Support", package: "swift-buffer-primitives"),
+            ],
+            path: "Tests/Support"
+        ),
     ],
     swiftLanguageModes: [.v6]
 )
