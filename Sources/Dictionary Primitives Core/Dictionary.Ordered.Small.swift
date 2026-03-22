@@ -42,13 +42,18 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// a deinitializer to clean up inline storage.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
-        /// Value storage using Buffer.Linear.Small — handles inline/heap dispatch internally.
-        @usableFromInline
-        package var _values: Buffer<Value>.Linear.Small<inlineCapacity>
-
-        /// Dense key storage for inline mode.
-        @usableFromInline
-        package var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
+        // WORKAROUND: swiftlang/swift#86652 — @_rawLayout triviality misclassification.
+        // Forces compiler to recognize type as non-trivially destructible so deinit executes.
+        // COST: 8 bytes overhead per instance.
+        // REMOVAL TEST: swift-buffer-primitives/Experiments/rawlayout-access-level-trigger/
+        //   Build with `public` access under -O. If it passes, remove this field
+        //   and the manual cleanup in deinit.
+        // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md
+        //
+        // NOTE: Must be declared BEFORE _buffer. The buffer transitively
+        // contains @_rawLayout storage which must be last in memory layout.
+        // See Storage.Inline for the Swift 6.2.4 IRGen crash details.
+        private var _deinitWorkaround: AnyObject? = nil
 
         @usableFromInline
         package var _count: Index_Primitives.Index<Key>.Count
@@ -57,14 +62,13 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         @usableFromInline
         package var _heapKeys: Set<Key>.Ordered?
 
-        // WORKAROUND: swiftlang/swift#86652 — @_rawLayout triviality misclassification.
-        // Forces compiler to recognize type as non-trivially destructible so deinit executes.
-        // COST: 8 bytes overhead per instance.
-        // REMOVAL TEST: swift-buffer-primitives/Experiments/rawlayout-access-level-trigger/
-        //   Build with `public` access under -O. If it passes, remove this field
-        //   and the manual cleanup in deinit.
-        // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md
-        private var _deinitWorkaround: AnyObject? = nil
+        /// Value storage using Buffer.Linear.Small — handles inline/heap dispatch internally.
+        @usableFromInline
+        package var _values: Buffer<Value>.Linear.Small<inlineCapacity>
+
+        /// Dense key storage for inline mode.
+        @usableFromInline
+        package var _inlineKeys: Buffer<Key>.Linear.Inline<inlineCapacity>
 
         /// Creates an empty small ordered dictionary.
         @inlinable

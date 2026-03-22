@@ -22,19 +22,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// requiring no heap allocation. The capacity is specified as a compile-time
     /// generic parameter.
     public struct Static<let capacity: Int>: ~Copyable {
-        /// Value storage using Buffer.Linear.Inline from buffer-primitives.
-        @usableFromInline
-        package var _values: Buffer<Value>.Linear.Inline<capacity>
-
-        /// Dense key storage using Buffer.Linear.Inline.
-        @usableFromInline
-        package var _keys: Buffer<Key>.Linear.Inline<capacity>
-
-        /// Hash table for O(1) key lookup via open-addressed linear probing.
-        /// Capacity must be a power of two.
-        @usableFromInline
-        package var _hashTable: Hash.Table<Key>.Static<capacity>
-
         // WORKAROUND: swiftlang/swift#86652 — @_rawLayout triviality misclassification.
         // Forces compiler to recognize type as non-trivially destructible so deinit executes.
         // COST: 8 bytes overhead per instance.
@@ -42,7 +29,24 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
         //   Build with `public` access under -O. If it passes, remove this field
         //   and the manual cleanup in deinit.
         // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md
+        //
+        // NOTE: Must be declared BEFORE _buffer. The buffer transitively
+        // contains @_rawLayout storage which must be last in memory layout.
+        // See Storage.Inline for the Swift 6.2.4 IRGen crash details.
         private var _deinitWorkaround: AnyObject? = nil
+
+        /// Hash table for O(1) key lookup via open-addressed linear probing.
+        /// Capacity must be a power of two.
+        @usableFromInline
+        package var _hashTable: Hash.Table<Key>.Static<capacity>
+
+        /// Value storage using Buffer.Linear.Inline from buffer-primitives.
+        @usableFromInline
+        package var _values: Buffer<Value>.Linear.Inline<capacity>
+
+        /// Dense key storage using Buffer.Linear.Inline.
+        @usableFromInline
+        package var _keys: Buffer<Key>.Linear.Inline<capacity>
 
         /// Creates an empty inline ordered dictionary.
         /// - Note: `capacity` must be a power of two (hash table requirement).
