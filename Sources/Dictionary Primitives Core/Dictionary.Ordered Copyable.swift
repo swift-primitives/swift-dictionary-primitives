@@ -69,9 +69,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     ///
     /// This method shadows the base `set(_:_:)` when `Value: Copyable`,
     /// providing copy-on-write semantics.
-    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
-    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
-    @_optimize(none)
     @inlinable
     public mutating func set(_ key: Key, _ value: Value) {
         makeUnique()
@@ -91,9 +88,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// - Parameter key: The key to remove.
     /// - Returns: The removed value, or `nil` if not present.
     /// - Complexity: O(n) due to index shifting, O(n) if copy triggered.
-    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
-    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
-    @_optimize(none)
     @inlinable
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
@@ -109,9 +103,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// providing copy-on-write semantics.
     ///
     /// - Parameter keepingCapacity: Whether to keep the current capacity.
-    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
-    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
-    @_optimize(none)
     @inlinable
     public mutating func clear(keepingCapacity: Bool = false) {
         makeUnique()

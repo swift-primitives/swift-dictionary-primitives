@@ -21,9 +21,6 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     ///   - key: The key.
     ///   - value: The value to associate with the key.
     /// - Complexity: O(1) amortized.
-    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
-    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
-    @_optimize(none)
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) {
         let hashValue = key.hashValue
