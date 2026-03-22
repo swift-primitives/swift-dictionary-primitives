@@ -90,6 +90,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     ///   - key: The key.
     ///   - value: The value to associate with the key.
     /// - Complexity: O(1) amortized.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) {
         if let existingKeyIndex = _keys.index(key) {
@@ -105,6 +108,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// - Parameter key: The key to remove.
     /// - Returns: The removed value, or `nil` if not present.
     /// - Complexity: O(n) due to index shifting.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
@@ -116,6 +122,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// Removes all key-value pairs.
     ///
     /// - Parameter keepingCapacity: Whether to keep the current capacity.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func clear(keepingCapacity: Bool = false) {
         _keys.clear(keepingCapacity: keepingCapacity)
@@ -196,6 +205,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     ///
     /// - Parameter body: A closure that receives each entry with ownership.
     /// - Complexity: O(n) where n is the number of elements.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func drain(_ body: (consuming Entry) -> Void) {
         var idx: Index_Primitives.Index<Key> = .zero
@@ -239,6 +251,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     ///   - value: The value to associate with the key.
     /// - Throws: ``Dictionary/Ordered/Bounded/Error/overflow`` if the dictionary is full
     ///   and the key is new.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) throws(Error) {
         if let existingKeyIndex = _keys.index(key) {
@@ -256,6 +271,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     ///
     /// - Parameter key: The key to remove.
     /// - Returns: The removed value, or `nil` if the key was not present.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
@@ -265,6 +283,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     }
 
     /// Removes all key-value pairs.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func clear() {
         _keys.clear(keepingCapacity: true)
@@ -340,6 +361,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     ///   - value: The value to associate with the key.
     /// - Throws: ``Dictionary/Ordered/Inline/Error/overflow`` if the dictionary is full
     ///   and the key is new.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) throws(Error) {
         let hashValue = key.hashValue
@@ -363,6 +387,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     ///
     /// - Parameter key: The key to remove.
     /// - Returns: The removed value, or `nil` if the key was not present.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
@@ -384,6 +411,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     }
 
     /// Removes all key-value pairs.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func clear() {
         guard _hashTable.count > .zero else { return }
@@ -473,6 +503,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
     /// - Parameters:
     ///   - key: The key.
     ///   - value: The value to associate with the key.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func set(_ key: Key, _ value: consuming Value) {
         if let heapKeys = _heapKeys {
@@ -507,6 +540,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
     ///
     /// - Parameter key: The key to remove.
     /// - Returns: The removed value, or `nil` if the key was not present.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     @discardableResult
     public mutating func remove(_ key: Key) -> Value? {
@@ -530,6 +566,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small where Value: ~Copy
     }
 
     /// Removes all key-value pairs.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func clear() {
         _values.remove.all()

@@ -35,6 +35,9 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     /// Removes all key-value pairs.
     ///
     /// - Parameter keepingCapacity: Whether to keep the current storage capacity.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func clear(keepingCapacity: Bool = false) {
         if keepingCapacity {
@@ -74,6 +77,9 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     ///
     /// - Parameter body: A closure that receives each entry with ownership.
     /// - Complexity: O(n) where n is the number of pairs.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @inlinable
     public mutating func drain(_ body: (consuming Entry) -> Void) {
         // Typed while loop: mutating during iteration requires manual control.
@@ -118,6 +124,9 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     /// Grows the slab storage and rebuilds the hash table.
     ///
     /// Follows the Hash.Table.grow() capacity computation pattern.
+    // WORKAROUND: @_optimize(none) suppresses CopyPropagation false positive.
+    // TRACKING: swift-buffer-primitives/Research/rawlayout-release-crash-investigation.md (Bug 2)
+    @_optimize(none)
     @usableFromInline
     mutating func _grow() {
         let occupancy = _keys.occupancy.retag(Key.self)
