@@ -10,10 +10,10 @@
 // ===----------------------------------------------------------------------===//
 
 public import Set_Primitives
-public import Buffer_Linear_Primitives
+internal import Buffer_Linear_Primitives
 public import Buffer_Slab_Primitives
 public import Index_Primitives
-public import Hash_Table_Primitives
+internal import Hash_Table_Primitives
 
 // ===----------------------------------------------------------------------===//
 // MARK: - Semantic Invariants

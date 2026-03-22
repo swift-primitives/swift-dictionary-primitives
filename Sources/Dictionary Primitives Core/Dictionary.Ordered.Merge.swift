@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Set_Primitives
+internal import Set_Primitives
 
 // MARK: - Merge Accessor (Copyable values only)
 //

@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Dictionary_Primitives_Core
-public import Sequence_Primitives
+internal import Sequence_Primitives
 public import Index_Primitives
 
 // Note: Dictionary.Ordered.Small is unconditionally ~Copyable (inline storage requires deinit),
