@@ -64,7 +64,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
             return unsafe _overrideLifetime(span, mutating: &self)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _index < _count else { return nil }

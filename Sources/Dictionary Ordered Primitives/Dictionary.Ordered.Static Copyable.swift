@@ -77,7 +77,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
             return unsafe _overrideLifetime(span, mutating: &self)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard _position < _end else { return nil }

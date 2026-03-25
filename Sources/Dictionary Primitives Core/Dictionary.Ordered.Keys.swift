@@ -116,7 +116,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Keys: Swift.Sequence {
             base.nextSpan(maximumCount: maximumCount)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Key? {
             base.next()

@@ -186,7 +186,6 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
             _inner.nextSpan(maximumCount: maximumCount)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Value? {
             _inner.next()

@@ -71,7 +71,6 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
             return unsafe _overrideLifetime(span, mutating: &self)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Element? {
             guard let slot = _occupiedSlots.next() else { return nil }
