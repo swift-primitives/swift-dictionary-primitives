@@ -8,7 +8,6 @@ let swiftSettings: [SwiftSetting] = [
     .enableUpcomingFeature("MemberImportVisibility"),
     .enableExperimentalFeature("Lifetimes"),
     .enableExperimentalFeature("SuppressedAssociatedTypes"),
-    .enableExperimentalFeature("SuppressedAssociatedTypesWithDefaults"),
     .enableExperimentalFeature("RawLayout"),
 ]
 
