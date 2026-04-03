@@ -17,6 +17,22 @@ let package = Package(
             targets: ["Dictionary Primitives"]
         ),
         .library(
+            name: "Dictionary Primitives Core",
+            targets: ["Dictionary Primitives Core"]
+        ),
+        .library(
+            name: "Dictionary Ordered Primitives",
+            targets: ["Dictionary Ordered Primitives"]
+        ),
+        .library(
+            name: "Dictionary Bounded Primitives",
+            targets: ["Dictionary Bounded Primitives"]
+        ),
+        .library(
+            name: "Dictionary Slab Primitives",
+            targets: ["Dictionary Slab Primitives"]
+        ),
+        .library(
             name: "Dictionary Primitives Test Support",
             targets: ["Dictionary Primitives Test Support"]
         ),
