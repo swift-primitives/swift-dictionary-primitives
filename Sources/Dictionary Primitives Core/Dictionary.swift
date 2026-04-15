@@ -126,7 +126,7 @@ extension Dictionary_Primitives_Core.Dictionary: Copyable where Value: Copyable 
 
 // MARK: - Sendable
 
-extension Dictionary_Primitives_Core.Dictionary: @unchecked Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary: @unsafe @unchecked Sendable where Key: Sendable, Value: Sendable {}
 
 // MARK: - Swift.Sequence/Collection Conformances
 //
