@@ -1,0 +1,22 @@
+{
+  "$schema": "https://swift-institute.org/schemas/experiments-index-v1.json",
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-04-18",
+  "title": "Experiments Index",
+  "blurb": "Experiments for swift-dictionary-primitives.",
+  "scope": "swift-dictionary-primitives (swift-primitives)",
+  "experiments": [
+    {
+      "directory": "iterator-slab-cross-module",
+      "displayName": "iterator-slab-cross-module",
+      "purpose": "Isolate Dictionary.Iterator bitmap bug — all variants pass as external dependency; original failure was stale build artifact, not compiler bug",
+      "date": "2026-02-24",
+      "toolchain": "swift-DEVELOPMENT-SNAPSHOT-2026-02-21-a",
+      "status": "CONFIRMED",
+      "statusDetail": "(stale build)",
+      "statusRaw": "CONFIRMED (stale build)",
+      "supersededBy": null,
+      "crossRefs": []
+    }
+  ]
+}
