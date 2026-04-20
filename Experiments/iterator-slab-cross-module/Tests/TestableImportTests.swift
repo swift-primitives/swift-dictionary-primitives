@@ -12,8 +12,8 @@ struct TestableImportIteratorTests {
 
     // MARK: - V1: @testable import, for-in
 
-    @Test("for-in with @testable import")
-    func forInTestable() {
+    @Test
+    func `for-in with @testable import`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -28,8 +28,8 @@ struct TestableImportIteratorTests {
 
     // MARK: - V2: @testable import, manual iterator
 
-    @Test("manual iterator with @testable import")
-    func manualIteratorTestable() {
+    @Test
+    func `manual iterator with @testable import`() {
         var dict = Dictionary<String, Int>()
         dict.set("x", 10)
         dict.set("y", 20)
@@ -45,8 +45,8 @@ struct TestableImportIteratorTests {
 
     // MARK: - V3: @testable import, 50 elements (matches failing test)
 
-    @Test("for-in after growth with @testable import")
-    func forInAfterGrowthTestable() {
+    @Test
+    func `for-in after growth with @testable import`() {
         var dict = Dictionary<String, Int>()
         for i in 0..<50 {
             dict.set("k\(i)", i)
