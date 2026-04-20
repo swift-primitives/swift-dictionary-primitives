@@ -20,8 +20,8 @@ struct DictionaryCopyableTests {
 
     // MARK: - Conformance
 
-    @Test("Dictionary is Copyable when Value is Copyable")
-    func copyable() {
+    @Test
+    func `Dictionary is Copyable when Value is Copyable`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -34,16 +34,16 @@ struct DictionaryCopyableTests {
         #expect(copy.contains("c") == true)
     }
 
-    @Test("empty Dictionary is Copyable")
-    func emptyCopyable() {
+    @Test
+    func `empty Dictionary is Copyable`() {
         let dict = Dictionary<String, Int>()
         let copy = dict
         #expect(copy.isEmpty == true)
         #expect(copy.count == .zero)
     }
 
-    @Test("copy reads values via subscript")
-    func copySubscript() {
+    @Test
+    func `copy reads values via subscript`() {
         var dict = Dictionary<String, Int>()
         dict["x"] = 10
         dict["y"] = 20
@@ -56,8 +56,8 @@ struct DictionaryCopyableTests {
 
     // MARK: - Copy After Mutations
 
-    @Test("copy after insert-remove-update reads correct state")
-    func copyAfterMutations() {
+    @Test
+    func `copy after insert-remove-update reads correct state`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -74,8 +74,8 @@ struct DictionaryCopyableTests {
         #expect(copy.contains("d") == true)
     }
 
-    @Test("copy after growth preserves all elements")
-    func copyAfterGrowth() {
+    @Test
+    func `copy after growth preserves all elements`() {
         var dict = Dictionary<String, Int>()
         for i in 0..<100 {
             dict.set("key\(i)", i)
@@ -88,8 +88,8 @@ struct DictionaryCopyableTests {
         }
     }
 
-    @Test("copy after clear is empty")
-    func copyAfterClear() {
+    @Test
+    func `copy after clear is empty`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -100,8 +100,8 @@ struct DictionaryCopyableTests {
         #expect(copy.count == .zero)
     }
 
-    @Test("copy after drain is empty")
-    func copyAfterDrain() {
+    @Test
+    func `copy after drain is empty`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -113,8 +113,8 @@ struct DictionaryCopyableTests {
 
     // MARK: - ARC Safety
 
-    @Test("dropping original does not invalidate copy")
-    func dropOriginal() {
+    @Test
+    func `dropping original does not invalidate copy`() {
         var original: Dictionary<String, Int>? = Dictionary<String, Int>()
         original!.set("a", 1)
         original!.set("b", 2)
@@ -127,8 +127,8 @@ struct DictionaryCopyableTests {
         #expect(copy.contains("b") == true)
     }
 
-    @Test("dropping both original and copy does not double-free")
-    func dropBoth() {
+    @Test
+    func `dropping both original and copy does not double-free`() {
         var original: Dictionary<String, Int>? = Dictionary<String, Int>()
         original!.set("a", 1)
         original!.set("b", 2)
@@ -140,8 +140,8 @@ struct DictionaryCopyableTests {
         // No crash = ARC correctly manages Storage.Slab lifetime
     }
 
-    @Test("multiple copies share storage safely")
-    func multipleCopies() {
+    @Test
+    func `multiple copies share storage safely`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
 
@@ -156,8 +156,8 @@ struct DictionaryCopyableTests {
 
     // MARK: - Sequence on Copy
 
-    @Test("for-in on copy iterates all elements")
-    func forInOnCopy() {
+    @Test
+    func `for-in on copy iterates all elements`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -171,8 +171,8 @@ struct DictionaryCopyableTests {
         #expect(keys.sorted() == ["a", "b", "c"])
     }
 
-    @Test("iterator captures snapshot independent of mutations")
-    func iteratorSnapshot() {
+    @Test
+    func `iterator captures snapshot independent of mutations`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -192,8 +192,8 @@ struct DictionaryCopyableTests {
         #expect(iterKeys.sorted() == ["a", "b"])
     }
 
-    @Test("for-in after growth works")
-    func forInAfterGrowth() {
+    @Test
+    func `for-in after growth works`() {
         var dict = Dictionary<String, Int>()
         for i in 0..<50 {
             dict.set("k\(i)", i)

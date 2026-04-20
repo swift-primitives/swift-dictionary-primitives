@@ -34,15 +34,15 @@ struct DictionaryTests {
 
 extension DictionaryTests.Unit {
 
-    @Test("init creates empty dictionary")
-    func initEmpty() {
+    @Test
+    func `init creates empty dictionary`() {
         let dict = Dictionary<String, Int>()
         #expect(dict.isEmpty == true)
         #expect(dict.count == .zero)
     }
 
-    @Test("set and contains")
-    func setAndContains() {
+    @Test
+    func `set and contains`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -52,8 +52,8 @@ extension DictionaryTests.Unit {
         #expect(dict.count == 2)
     }
 
-    @Test("remove returns removed value")
-    func removeReturns() {
+    @Test
+    func `remove returns removed value`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -64,8 +64,8 @@ extension DictionaryTests.Unit {
         #expect(dict.count == 1)
     }
 
-    @Test("remove nonexistent key returns nil")
-    func removeNonexistent() {
+    @Test
+    func `remove nonexistent key returns nil`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         let removed = dict.remove("b")
@@ -73,8 +73,8 @@ extension DictionaryTests.Unit {
         #expect(dict.count == 1)
     }
 
-    @Test("set overwrites existing value")
-    func setOverwrites() {
+    @Test
+    func `set overwrites existing value`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("a", 99)
@@ -90,8 +90,8 @@ extension DictionaryTests.Unit {
         #expect(found == true)
     }
 
-    @Test("forEach visits all elements")
-    func forEachVisits() {
+    @Test
+    func `forEach visits all elements`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -107,8 +107,8 @@ extension DictionaryTests.Unit {
         #expect(values.sorted() == [1, 2, 3])
     }
 
-    @Test("withValue accesses value for key")
-    func withValueAccess() {
+    @Test
+    func `withValue accesses value for key`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 42)
 
@@ -123,8 +123,8 @@ extension DictionaryTests.Unit {
         #expect(missing == nil)
     }
 
-    @Test("clear removes all entries")
-    func clearAll() {
+    @Test
+    func `clear removes all entries`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -140,8 +140,8 @@ extension DictionaryTests.Unit {
 
 extension DictionaryTests.Unit {
 
-    @Test("for-in loop iterates all elements")
-    func forInLoop() {
+    @Test
+    func `for-in loop iterates all elements`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -156,8 +156,8 @@ extension DictionaryTests.Unit {
         #expect(Swift.Set(pairs.map(\.1)) == [1, 2, 3])
     }
 
-    @Test("makeIterator produces valid iterator")
-    func makeIterator() {
+    @Test
+    func `makeIterator produces valid iterator`() {
         var dict = Dictionary<String, Int>()
         dict.set("x", 10)
 
@@ -171,8 +171,8 @@ extension DictionaryTests.Unit {
         #expect(second == nil)
     }
 
-    @Test("for-in on empty dictionary produces no iterations")
-    func forInEmpty() {
+    @Test
+    func `for-in on empty dictionary produces no iterations`() {
         let dict = Dictionary<String, Int>()
         var count = 0
         for _ in dict {
@@ -186,8 +186,8 @@ extension DictionaryTests.Unit {
 
 extension DictionaryTests.Unit {
 
-    @Test("subscript get returns value or nil")
-    func subscriptGet() {
+    @Test
+    func `subscript get returns value or nil`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
 
@@ -195,16 +195,16 @@ extension DictionaryTests.Unit {
         #expect(dict["b"] == nil)
     }
 
-    @Test("subscript set inserts value")
-    func subscriptSet() {
+    @Test
+    func `subscript set inserts value`() {
         var dict = Dictionary<String, Int>()
         dict["a"] = 1
         #expect(dict.count == 1)
         #expect(dict["a"] == 1)
     }
 
-    @Test("subscript set nil removes value")
-    func subscriptSetNil() {
+    @Test
+    func `subscript set nil removes value`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict["a"] = nil
@@ -212,8 +212,8 @@ extension DictionaryTests.Unit {
         #expect(dict.count == .zero)
     }
 
-    @Test("subscript set overwrites existing")
-    func subscriptOverwrite() {
+    @Test
+    func `subscript set overwrites existing`() {
         var dict = Dictionary<String, Int>()
         dict["a"] = 1
         dict["a"] = 99
@@ -226,8 +226,8 @@ extension DictionaryTests.Unit {
 
 extension DictionaryTests.Unit {
 
-    @Test("drain removes all entries")
-    func drainAll() {
+    @Test
+    func `drain removes all entries`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -242,8 +242,8 @@ extension DictionaryTests.Unit {
         #expect(Swift.Set(entries.map(\.0)) == ["a", "b", "c"])
     }
 
-    @Test("drain on empty dictionary is no-op")
-    func drainEmpty() {
+    @Test
+    func `drain on empty dictionary is no-op`() {
         var dict = Dictionary<String, Int>()
         var count = 0
         dict.drain { _ in count += 1 }
@@ -256,8 +256,8 @@ extension DictionaryTests.Unit {
 
 extension DictionaryTests.Unit {
 
-    @Test("removeAll clears dictionary")
-    func removeAllClearable() {
+    @Test
+    func `removeAll clears dictionary`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
@@ -271,8 +271,8 @@ extension DictionaryTests.Unit {
 
 extension DictionaryTests.EdgeCase {
 
-    @Test("growth preserves all elements")
-    func growthPreserves() {
+    @Test
+    func `growth preserves all elements`() {
         var dict = Dictionary<String, Int>()
         let n = 100
         for i in 0..<n {
@@ -286,8 +286,8 @@ extension DictionaryTests.EdgeCase {
         }
     }
 
-    @Test("insert-remove-reinsert cycle")
-    func insertRemoveReinsert() {
+    @Test
+    func `insert-remove-reinsert cycle`() {
         var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         _ = dict.remove("a")
@@ -296,8 +296,8 @@ extension DictionaryTests.EdgeCase {
         #expect(dict.count == 1)
     }
 
-    @Test("multiple insert-remove cycles")
-    func multipleInsertRemoveCycles() {
+    @Test
+    func `multiple insert-remove cycles`() {
         var dict = Dictionary<String, Int>()
         for cycle in 0..<5 {
             for i in 0..<20 {
@@ -322,8 +322,8 @@ extension DictionaryTests.EdgeCase {
 
 extension DictionaryTests.Integration {
 
-    @Test("mixed operations: set, remove, iterate")
-    func mixedOperations() {
+    @Test
+    func `mixed operations: set, remove, iterate`() {
         var dict = Dictionary<String, Int>()
 
         // Insert
@@ -352,8 +352,8 @@ extension DictionaryTests.Integration {
         #expect(keys.sorted() == ["a", "c", "d"])
     }
 
-    @Test("heavy insert-remove preserves invariants")
-    func heavyInsertRemove() {
+    @Test
+    func `heavy insert-remove preserves invariants`() {
         var dict = Dictionary<String, Int>()
 
         // Insert 200 elements
@@ -378,8 +378,8 @@ extension DictionaryTests.Integration {
         }
     }
 
-    @Test("subscript-based workflow")
-    func subscriptWorkflow() {
+    @Test
+    func `subscript-based workflow`() {
         var dict = Dictionary<String, Int>()
 
         // Build via subscript
