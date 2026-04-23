@@ -12,7 +12,7 @@
 import Testing
 @testable import Dictionary_Primitives
 import Index_Primitives_Test_Support
-import Identity_Primitives_Test_Support
+import Tagged_Primitives_Test_Support
 
 // MARK: - Dictionary.Ordered Model Tests
 //

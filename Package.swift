@@ -41,7 +41,7 @@ let package = Package(
         .package(path: "../swift-set-primitives"),
         .package(path: "../swift-hash-table-primitives"),
         .package(path: "../swift-index-primitives"),
-        .package(path: "../swift-identity-primitives"),
+        .package(path: "../swift-tagged-primitives"),
         .package(path: "../swift-collection-primitives"),
         .package(path: "../swift-input-primitives"),
         .package(path: "../swift-sequence-primitives"),
@@ -111,7 +111,7 @@ let package = Package(
             dependencies: [
                 "Dictionary Primitives",
                 .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
-                .product(name: "Identity Primitives Test Support", package: "swift-identity-primitives"),
+                .product(name: "Tagged Primitives Test Support", package: "swift-tagged-primitives"),
             ]
         ),
 
@@ -123,7 +123,7 @@ let package = Package(
                 .product(name: "Set Primitives Test Support", package: "swift-set-primitives"),
                 .product(name: "Hash Table Primitives Test Support", package: "swift-hash-table-primitives"),
                 .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
-                .product(name: "Identity Primitives Test Support", package: "swift-identity-primitives"),
+                .product(name: "Tagged Primitives Test Support", package: "swift-tagged-primitives"),
                 .product(name: "Collection Primitives Test Support", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives Test Support", package: "swift-input-primitives"),
                 .product(name: "Sequence Primitives Test Support", package: "swift-sequence-primitives"),
