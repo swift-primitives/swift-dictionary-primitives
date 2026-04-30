@@ -254,6 +254,7 @@ do {
 // MARK: - V8: Same as V7 but used via for-in (Sequence)
 // Hypothesis: for-in adds another copy layer
 // Result: [PENDING]
+// Revalidated: Swift 6.3.1 (2026-04-30) — PASSES
 // ============================================================================
 
 do {
