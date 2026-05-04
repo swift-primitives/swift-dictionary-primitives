@@ -37,14 +37,14 @@ extension DictionaryTests.Unit {
 
     @Test
     func `init creates empty dictionary`() {
-        let dict = [String: Int]()
+        let dict = Dictionary<String, Int>()
         #expect(dict.isEmpty == true)
         #expect(dict.count == .zero)
     }
 
     @Test
     func `set and contains`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         #expect(dict.contains("a") == true)
@@ -55,7 +55,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `remove returns removed value`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
 
@@ -67,7 +67,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `remove nonexistent key returns nil`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         let removed = dict.remove("b")
         #expect(removed == nil)
@@ -76,7 +76,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `set overwrites existing value`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("a", 99)
         #expect(dict.count == 1)
@@ -93,7 +93,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `forEach visits all elements`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -110,7 +110,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `withValue accesses value for key`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 42)
 
         let result = dict.withValue(forKey: "a") { value in
@@ -126,7 +126,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `clear removes all entries`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -143,7 +143,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `for-in loop iterates all elements`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -159,7 +159,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `makeIterator produces valid iterator`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("x", 10)
 
         var iter = dict.makeIterator()
@@ -174,7 +174,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `for-in on empty dictionary produces no iterations`() {
-        let dict = [String: Int]()
+        let dict = Dictionary<String, Int>()
         var count = 0
         for _ in dict {
             count += 1
@@ -189,7 +189,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `subscript get returns value or nil`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
 
         #expect(dict["a"] == 1)
@@ -198,7 +198,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `subscript set inserts value`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict["a"] = 1
         #expect(dict.count == 1)
         #expect(dict["a"] == 1)
@@ -206,7 +206,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `subscript set nil removes value`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict["a"] = nil
         #expect(dict.contains("a") == false)
@@ -215,7 +215,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `subscript set overwrites existing`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict["a"] = 1
         dict["a"] = 99
         #expect(dict["a"] == 99)
@@ -229,7 +229,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `drain removes all entries`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -245,7 +245,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `drain on empty dictionary is no-op`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         var count = 0
         dict.drain { _ in count += 1 }
         #expect(count == 0)
@@ -259,7 +259,7 @@ extension DictionaryTests.Unit {
 
     @Test
     func `removeAll clears dictionary`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.removeAll()
@@ -274,7 +274,7 @@ extension DictionaryTests.EdgeCase {
 
     @Test
     func `growth preserves all elements`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         let n = 100
         for i in 0..<n {
             dict.set("key\(i)", i)
@@ -289,7 +289,7 @@ extension DictionaryTests.EdgeCase {
 
     @Test
     func `insert-remove-reinsert cycle`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         _ = dict.remove("a")
         dict.set("a", 2)
@@ -299,7 +299,7 @@ extension DictionaryTests.EdgeCase {
 
     @Test
     func `multiple insert-remove cycles`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         for cycle in 0..<5 {
             for i in 0..<20 {
                 dict.set("k\(i)", cycle * 20 + i)
@@ -325,7 +325,7 @@ extension DictionaryTests.Integration {
 
     @Test
     func `mixed operations: set, remove, iterate`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
 
         // Insert
         dict.set("a", 1)
@@ -355,7 +355,7 @@ extension DictionaryTests.Integration {
 
     @Test
     func `heavy insert-remove preserves invariants`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
 
         // Insert 200 elements
         for i in 0..<200 {
@@ -381,7 +381,7 @@ extension DictionaryTests.Integration {
 
     @Test
     func `subscript-based workflow`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
 
         // Build via subscript
         dict["x"] = 10

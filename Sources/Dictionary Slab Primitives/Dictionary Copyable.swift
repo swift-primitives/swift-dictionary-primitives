@@ -43,7 +43,7 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         var _element: Element? = nil
 
         @usableFromInline
-        init(_ dict: borrowing [Key: Value]) {
+        init(_ dict: borrowing Dictionary<Key, Value>) {
             let occupiedSlots = dict._keys.occupiedSlots
             self._keys = dict._keys
             self._values = dict._values

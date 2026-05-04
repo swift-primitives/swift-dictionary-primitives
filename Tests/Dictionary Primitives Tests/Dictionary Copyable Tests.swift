@@ -23,7 +23,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `Dictionary is Copyable when Value is Copyable`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -37,7 +37,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `empty Dictionary is Copyable`() {
-        let dict = [String: Int]()
+        let dict = Dictionary<String, Int>()
         let copy = dict
         #expect(copy.isEmpty == true)
         #expect(copy.count == .zero)
@@ -45,7 +45,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `copy reads values via subscript`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict["x"] = 10
         dict["y"] = 20
 
@@ -59,7 +59,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `copy after insert-remove-update reads correct state`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -77,7 +77,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `copy after growth preserves all elements`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         for i in 0..<100 {
             dict.set("key\(i)", i)
         }
@@ -91,7 +91,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `copy after clear is empty`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.clear(keepingCapacity: true)
@@ -103,7 +103,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `copy after drain is empty`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.drain { _ in }
@@ -116,7 +116,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `dropping original does not invalidate copy`() {
-        var original: [String: Int]? = [String: Int]()
+        var original: Dictionary<String, Int>? = Dictionary<String, Int>()
         original!.set("a", 1)
         original!.set("b", 2)
 
@@ -130,11 +130,11 @@ struct DictionaryCopyableTests {
 
     @Test
     func `dropping both original and copy does not double-free`() {
-        var original: [String: Int]? = [String: Int]()
+        var original: Dictionary<String, Int>? = Dictionary<String, Int>()
         original!.set("a", 1)
         original!.set("b", 2)
 
-        var copy: [String: Int]? = original
+        var copy: Dictionary<String, Int>? = original
         original = nil
         #expect(copy!.count == 2)
         copy = nil
@@ -143,7 +143,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `multiple copies share storage safely`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
 
         let copy1 = dict
@@ -159,7 +159,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `for-in on copy iterates all elements`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
         dict.set("c", 3)
@@ -174,7 +174,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `iterator captures snapshot independent of mutations`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         dict.set("a", 1)
         dict.set("b", 2)
 
@@ -195,7 +195,7 @@ struct DictionaryCopyableTests {
 
     @Test
     func `for-in after growth works`() {
-        var dict = [String: Int]()
+        var dict = Dictionary<String, Int>()
         for i in 0..<50 {
             dict.set("k\(i)", i)
         }
