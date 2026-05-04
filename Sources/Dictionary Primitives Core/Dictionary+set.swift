@@ -42,7 +42,7 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
             _keys.insert(key, at: slot)
             _values.insert(consume value, at: slot)
             _hashTable.insert(
-                __unchecked: (),
+                _unchecked: (),
                 position: slot.retag(Key.self),
                 hashValue: hashValue
             )

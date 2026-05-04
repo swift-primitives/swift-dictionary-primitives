@@ -149,7 +149,7 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
                 newKeys.insert(key, at: newSlot)
                 newValues.insert(consume value, at: newSlot)
                 newHashTable.insert(
-                    __unchecked: (),
+                    _unchecked: (),
                     position: newSlot.retag(Key.self),
                     hashValue: key.hashValue
                 )

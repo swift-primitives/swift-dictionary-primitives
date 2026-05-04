@@ -355,7 +355,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
             let position: Index_Primitives.Index<Key>.Bounded<capacity> = .init(_keys.count.map(Ordinal.init))!
             _ = _keys.append(key)
             _ = _values.append(value)
-            _ = _hashTable.insert(__unchecked: (), position: position, hashValue: hashValue)
+            _ = _hashTable.insert(_unchecked: (), position: position, hashValue: hashValue)
         }
     }
 
