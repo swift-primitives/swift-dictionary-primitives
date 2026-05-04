@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Set_Primitives
 public import Index_Primitives
+public import Set_Primitives
 
 // MARK: - Keys Accessor
 

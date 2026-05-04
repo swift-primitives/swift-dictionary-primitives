@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Dictionary_Primitives_Core
-internal import Sequence_Primitives
 public import Index_Primitives
+internal import Sequence_Primitives
 
 // MARK: - Iterator
 

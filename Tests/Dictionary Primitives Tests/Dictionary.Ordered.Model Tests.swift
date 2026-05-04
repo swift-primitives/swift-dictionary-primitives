@@ -9,10 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Testing
-@testable import Dictionary_Primitives
 import Index_Primitives_Test_Support
 import Tagged_Primitives_Test_Support
+import Testing
+
+@testable import Dictionary_Primitives
 
 // MARK: - Dictionary.Ordered Model Tests
 //
@@ -38,7 +39,7 @@ private struct LCG {
     }
 
     mutating func next() -> UInt64 {
-        state = state &* 6364136223846793005 &+ 1442695040888963407
+        state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
         return state
     }
 
@@ -211,10 +212,10 @@ extension DictionaryOrderedModelTests.Unit {
             }
         }
 
-        #expect(orderedDict["a"] == 1)   // kept original
-        #expect(orderedDict["b"] == 2)   // kept original
-        #expect(orderedDict["c"] == 3)   // new
-        #expect(orderedDict["d"] == 4)   // new
+        #expect(orderedDict["a"] == 1)  // kept original
+        #expect(orderedDict["b"] == 2)  // kept original
+        #expect(orderedDict["c"] == 3)  // new
+        #expect(orderedDict["d"] == 4)  // new
         #expect(Array(orderedDict.keys) == model.keys)
     }
 
@@ -238,7 +239,7 @@ extension DictionaryOrderedModelTests.Unit {
         }
 
         #expect(orderedDict["a"] == model["a"])
-        #expect(orderedDict["b"] == 20)   // updated
+        #expect(orderedDict["b"] == 20)  // updated
         #expect(orderedDict["c"] == 3)
         #expect(orderedDict["d"] == 4)
 

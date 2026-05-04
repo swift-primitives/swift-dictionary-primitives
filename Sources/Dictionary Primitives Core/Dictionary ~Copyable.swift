@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Index_Primitives
-public import Hash_Table_Primitives
 public import Buffer_Slab_Primitives
+public import Hash_Table_Primitives
+public import Index_Primitives
 
 // MARK: - Properties (~Copyable)
 
@@ -105,9 +105,14 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     /// - Returns: The result of the closure, or `nil` if the key doesn't exist.
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
-        guard let position = _hashTable.position(forHash: key.hashValue, equals: { position in
-            _keys[position.retag(Bit.self)] == key
-        }) else { return nil }
+        guard
+            let position = _hashTable.position(
+                forHash: key.hashValue,
+                equals: { position in
+                    _keys[position.retag(Bit.self)] == key
+                }
+            )
+        else { return nil }
         return body(_values[position.retag(Bit.self)])
     }
 }

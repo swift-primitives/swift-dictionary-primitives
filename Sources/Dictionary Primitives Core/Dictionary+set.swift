@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Index_Primitives
 public import Hash_Table_Primitives
+public import Index_Primitives
 
 // MARK: - Set (Insert / Update)
 
@@ -25,9 +25,12 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     public mutating func set(_ key: Key, _ value: consuming Value) {
         let hashValue = key.hashValue
 
-        if let existingPosition = _hashTable.position(forHash: hashValue, equals: { position in
-            _keys[position.retag(Bit.self)] == key
-        }) {
+        if let existingPosition = _hashTable.position(
+            forHash: hashValue,
+            equals: { position in
+                _keys[position.retag(Bit.self)] == key
+            }
+        ) {
             // Update: replace value at existing slot
             let slot = existingPosition.retag(Bit.self)
             _ = _values.update(at: slot, with: value)

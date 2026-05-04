@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Dictionary_Primitives_Core
-internal import Sequence_Primitives
 public import Index_Primitives
+internal import Sequence_Primitives
 
 // Note: Dictionary.Ordered.Static is unconditionally ~Copyable (inline storage requires deinit),
 // so it cannot conform to Swift.Sequence which requires Copyable.
@@ -89,7 +89,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
 }
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Static.Iterator: Sendable
-    where Key: Sendable, Value: Sendable {}
+where Key: Sendable, Value: Sendable {}
 
 // ============================================================================
 // MARK: - Sequence.Protocol Conformance

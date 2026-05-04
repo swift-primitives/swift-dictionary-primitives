@@ -9,10 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Testing
-@testable import Dictionary_Primitives
 import Index_Primitives_Test_Support
 import Tagged_Primitives_Test_Support
+import Testing
+
+@testable import Dictionary_Primitives
 
 // MARK: - Dictionary.Ordered Tests
 //
@@ -171,7 +172,7 @@ extension DictionaryOrderedTests.Unit {
         let dict = try Dictionary<String, Int>.Ordered([
             ("a", 1),
             ("b", 2),
-            ("c", 3)
+            ("c", 3),
         ])
 
         #expect(dict.count == 3)
@@ -276,7 +277,7 @@ extension DictionaryOrderedTests.EdgeCase {
             _ = try Dictionary<String, Int>.Ordered([
                 ("a", 1),
                 ("b", 2),
-                ("a", 3)  // Duplicate
+                ("a", 3),  // Duplicate
             ])
         }
     }
@@ -290,7 +291,7 @@ extension DictionaryOrderedTests.EdgeCase {
                 ("a", 1),
                 ("b", 2),
                 ("c", 3),
-                ("a", 10)  // Duplicate
+                ("a", 10),  // Duplicate
             ])
             Issue.record("Expected error to be thrown")
         } catch let error as Dictionary<String, Int>.Ordered.Error {

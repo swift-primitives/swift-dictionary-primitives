@@ -267,9 +267,14 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: Copy
     public subscript(key: Key) -> Value? {
         get {
             let hashValue = key.hashValue
-            guard let position = _hashTable.position(forHash: hashValue, equals: { idx in
-                _keys[idx] == key
-            }) else { return nil }
+            guard
+                let position = _hashTable.position(
+                    forHash: hashValue,
+                    equals: { idx in
+                        _keys[idx] == key
+                    }
+                )
+            else { return nil }
             return _values[Index_Primitives.Index<Key>(position).retag(Value.self)]
         }
     }

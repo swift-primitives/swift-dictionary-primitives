@@ -318,9 +318,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     @inlinable
     public func contains(_ key: Key) -> Bool {
         let hashValue = key.hashValue
-        return _hashTable.contains(hashValue: hashValue, equals: { idx in
-            _keys[idx] == key
-        })
+        return _hashTable.contains(
+            hashValue: hashValue,
+            equals: { idx in
+                _keys[idx] == key
+            }
+        )
     }
 
     /// Returns the bounded index of the given key, or nil if not present.
@@ -328,9 +331,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     @inlinable
     public func index(of key: Key) -> Index_Primitives.Index<Key>.Bounded<capacity>? {
         let hashValue = key.hashValue
-        return _hashTable.position(forHash: hashValue, equals: { idx in
-            _keys[idx] == key
-        })
+        return _hashTable.position(
+            forHash: hashValue,
+            equals: { idx in
+                _keys[idx] == key
+            }
+        )
     }
 
     /// Sets a value for the given key.
@@ -344,9 +350,12 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     public mutating func set(_ key: Key, _ value: consuming Value) throws(Error) {
         let hashValue = key.hashValue
 
-        if let existingPosition = _hashTable.position(forHash: hashValue, equals: { idx in
-            _keys[idx] == key
-        }) {
+        if let existingPosition = _hashTable.position(
+            forHash: hashValue,
+            equals: { idx in
+                _keys[idx] == key
+            }
+        ) {
             _ = _values.replace(at: existingPosition.retag(Value.self), with: value)
         } else {
             guard !_hashTable.isFull else {
@@ -368,9 +377,14 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     public mutating func remove(_ key: Key) -> Value? {
         let hashValue = key.hashValue
 
-        guard let removedPosition = _hashTable.remove(hashValue: hashValue, equals: { idx in
-            _keys[idx] == key
-        }) else {
+        guard
+            let removedPosition = _hashTable.remove(
+                hashValue: hashValue,
+                equals: { idx in
+                    _keys[idx] == key
+                }
+            )
+        else {
             return nil
         }
 
@@ -396,9 +410,14 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     @inlinable
     public func withValue<R>(forKey key: Key, _ body: (borrowing Value) -> R) -> R? {
         let hashValue = key.hashValue
-        guard let position = _hashTable.position(forHash: hashValue, equals: { idx in
-            _keys[idx] == key
-        }) else { return nil }
+        guard
+            let position = _hashTable.position(
+                forHash: hashValue,
+                equals: { idx in
+                    _keys[idx] == key
+                }
+            )
+        else { return nil }
         return body(_values[Index_Primitives.Index<Key>(position).retag(Value.self)])
     }
 

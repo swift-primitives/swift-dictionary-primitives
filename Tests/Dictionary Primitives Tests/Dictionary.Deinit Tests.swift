@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import Testing
+
 @testable import Dictionary_Primitives
 
 @Suite("Dictionary - Deinit")
@@ -24,7 +25,10 @@ struct DictionaryDeinitTests {
     struct TrackedValue: ~Copyable {
         let id: Int
         let tracker: Tracker
-        init(_ id: Int, tracker: Tracker) { self.id = id; self.tracker = tracker }
+        init(_ id: Int, tracker: Tracker) {
+            self.id = id
+            self.tracker = tracker
+        }
         deinit { tracker.append(id) }
     }
 

@@ -9,9 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Testing
-@testable import Dictionary_Primitives
 import Tagged_Primitives_Test_Support
+import Testing
+
+@testable import Dictionary_Primitives
 
 // MARK: - Dictionary.Ordered.Small Tests
 //

@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Index_Primitives
 public import Hash_Table_Primitives
+public import Index_Primitives
 
 // MARK: - Remove
 
@@ -28,9 +28,14 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     public mutating func remove(_ key: Key) -> Value? {
         let hashValue = key.hashValue
 
-        guard let removedPosition = _hashTable.remove(hashValue: hashValue, equals: { position in
-            _keys[position.retag(Bit.self)] == key
-        }) else {
+        guard
+            let removedPosition = _hashTable.remove(
+                hashValue: hashValue,
+                equals: { position in
+                    _keys[position.retag(Bit.self)] == key
+                }
+            )
+        else {
             return nil
         }
 

@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Index_Primitives
 public import Hash_Table_Primitives
+public import Index_Primitives
 
 // MARK: - Lookup
 
@@ -23,8 +23,11 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     @inlinable
     public func contains(_ key: Key) -> Bool {
         let hashValue = key.hashValue
-        return _hashTable.position(forHash: hashValue, equals: { position in
-            _keys[position.retag(Bit.self)] == key
-        }) != nil
+        return _hashTable.position(
+            forHash: hashValue,
+            equals: { position in
+                _keys[position.retag(Bit.self)] == key
+            }
+        ) != nil
     }
 }

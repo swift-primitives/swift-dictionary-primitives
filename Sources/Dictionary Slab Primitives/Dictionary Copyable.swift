@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Dictionary_Primitives_Core
-internal import Sequence_Primitives
 internal import Index_Primitives
+internal import Sequence_Primitives
 
 // MARK: - Iterator
 
@@ -43,7 +43,7 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         var _element: Element? = nil
 
         @usableFromInline
-        init(_ dict: borrowing Dictionary<Key, Value>) {
+        init(_ dict: borrowing [Key: Value]) {
             let occupiedSlots = dict._keys.occupiedSlots
             self._keys = dict._keys
             self._values = dict._values
@@ -119,9 +119,14 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
     @inlinable
     public subscript(key: Key) -> Value? {
         get {
-            guard let position = _hashTable.position(forHash: key.hashValue, equals: { position in
-                _keys[position.retag(Bit.self)] == key
-            }) else { return nil }
+            guard
+                let position = _hashTable.position(
+                    forHash: key.hashValue,
+                    equals: { position in
+                        _keys[position.retag(Bit.self)] == key
+                    }
+                )
+            else { return nil }
             return _values[position.retag(Bit.self)]
         }
         set {

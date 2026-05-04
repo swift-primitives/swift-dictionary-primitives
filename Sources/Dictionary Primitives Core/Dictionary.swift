@@ -9,11 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Set_Primitives
 internal import Buffer_Linear_Primitives
 public import Buffer_Slab_Primitives
-public import Index_Primitives
 internal import Hash_Table_Primitives
+public import Index_Primitives
+public import Set_Primitives
 
 // ===----------------------------------------------------------------------===//
 // MARK: - Semantic Invariants
