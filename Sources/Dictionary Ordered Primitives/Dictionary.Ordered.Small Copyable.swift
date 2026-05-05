@@ -134,7 +134,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Small: Sequence.`Protoco
 extension Dictionary_Primitives_Core.Dictionary.Ordered.Small: Sequence.Clearable where Value: Copyable {
     /// Removes all key-value pairs from the dictionary.
     ///
-    /// This enables `.forEach.consuming { }` pattern via `Property.View` extension.
+    /// This enables `.forEach.consuming { }` pattern via `Property.Inout` extension.
     @inlinable
     public mutating func removeAll() {
         clear()

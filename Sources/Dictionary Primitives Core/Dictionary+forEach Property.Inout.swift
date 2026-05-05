@@ -13,7 +13,7 @@ public import Buffer_Slab_Primitives
 
 // MARK: - forEach { } (borrowing key-value pairs)
 
-extension Property.View.Read where Base: ~Copyable {
+extension Property.Borrow where Base: ~Copyable {
 
     /// Iterates all key-value pairs, borrowing each value.
     ///
@@ -30,13 +30,13 @@ extension Property.View.Read where Base: ~Copyable {
         _ body: (Key, borrowing Value) -> Void
     ) where Tag == Sequence.ForEach, Base == Dictionary_Primitives_Core.Dictionary<Key, Value>, Value: ~Copyable {
         var slot: Bit.Index = .zero
-        let end = unsafe base.value._keys.capacity.map(Ordinal.init)
-        var remaining = unsafe base.value._keys.occupancy
+        let end = base.value._keys.capacity.map(Ordinal.init)
+        var remaining = base.value._keys.occupancy
         while slot < end, remaining != .zero {
-            if unsafe base.value._keys.isOccupied(at: slot) {
+            if base.value._keys.isOccupied(at: slot) {
                 body(
-                    unsafe base.value._keys[slot],
-                    unsafe base.value._values[slot]
+                    base.value._keys[slot],
+                    base.value._values[slot]
                 )
                 remaining = remaining.subtract.saturating(.one)
             }

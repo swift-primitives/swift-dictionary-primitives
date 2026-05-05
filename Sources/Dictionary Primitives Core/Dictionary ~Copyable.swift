@@ -55,15 +55,15 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
 extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     /// Non-mutating read-only view for forEach iteration.
     ///
-    /// Uses `Property.View.Read` at the Dictionary level (not Slab level)
+    /// Uses `Property.Borrow` at the Dictionary level (not Slab level)
     /// so that both `_keys` and `_values` can be accessed through the pointer
     /// without borrow conflicts.
     ///
     /// - Complexity: O(n) where n is the number of pairs.
     @inlinable
-    public var forEach: Property<Sequence.ForEach, Self>.View.Read {
+    public var forEach: Property<Sequence.ForEach, Self>.Borrow {
         _read {
-            yield Property<Sequence.ForEach, Self>.View.Read(self)
+            yield Property<Sequence.ForEach, Self>.Borrow(self)
         }
     }
 
