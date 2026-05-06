@@ -52,6 +52,15 @@ extension Dictionary.Ordered where Value: Copyable {
             expression
         }
 
+        /// Bulk-add a sequence of key-value pairs without per-iteration allocation.
+        @inlinable
+        public static func buildExpression<S: Swift.Sequence>(
+            _ expression: S
+        ) -> [(Key, Value)]
+        where S.Element == (Key, Value) {
+            Array(expression)
+        }
+
         @inlinable
         public static func buildExpression(
             _ expression: (Key, Value)?
@@ -82,10 +91,11 @@ extension Dictionary.Ordered where Value: Copyable {
 
         @inlinable
         public static func buildPartialBlock(
-            accumulated: [(Key, Value)],
+            accumulated: consuming [(Key, Value)],
             next: [(Key, Value)]
         ) -> [(Key, Value)] {
-            accumulated + next
+            accumulated.append(contentsOf: next)
+            return accumulated
         }
 
         // MARK: - Block Building
