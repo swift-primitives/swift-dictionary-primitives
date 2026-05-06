@@ -22,7 +22,7 @@ extension Dictionary {
     /// ## Position Semantics
     ///
     /// Position 0 is the first entry in insertion order.
-    /// Position `count - 1` is the most recently inserted entry.
+    /// The last position is the most recently inserted entry.
     ///
     /// ## Example
     ///
