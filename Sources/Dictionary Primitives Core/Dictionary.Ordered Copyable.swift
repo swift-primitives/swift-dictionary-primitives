@@ -19,7 +19,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: Copyable {
     /// - Parameter pairs: The key-value pairs.
     /// - Throws: `Ordered.Error.duplicate` if duplicate keys are found.
     @inlinable
-    public init(_ pairs: some Swift.Sequence<(Key, Value)>) throws(Self.Error) {
+    public init(_ pairs: some Swift.Sequence<(Key, Value)>) throws(Dictionary_Primitives_Core.Dictionary.Ordered.Error) {
         self.init()
         for (key, value) in pairs {
             let (inserted, _) = _keys.insert(key)
