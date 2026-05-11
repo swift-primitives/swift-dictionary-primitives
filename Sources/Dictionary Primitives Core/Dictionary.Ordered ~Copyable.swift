@@ -20,7 +20,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     ///
     /// - Parameter capacity: Number of elements to reserve space for.
     @inlinable
-    public init(reservingCapacity capacity: Index_Primitives.Index<Key>.Count) throws(Dictionary_Primitives_Core.Dictionary.Ordered.Error) {
+    public init(reservingCapacity capacity: Index_Primitives.Index<Key>.Count) throws(Self.Error) {
         self._keys = Set<Key>.Ordered()
         self._keys.reserve(capacity)
         self._values = Buffer<Value>.Linear(minimumCapacity: capacity.retag(Value.self))
@@ -240,7 +240,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Bounded where Value: ~Co
     /// - Throws: ``Dictionary/Ordered/Bounded/Error/overflow`` if the dictionary is full
     ///   and the key is new.
     @inlinable
-    public mutating func set(_ key: Key, _ value: consuming Value) throws(Dictionary_Primitives_Core.Dictionary.Ordered.Bounded.Error) {
+    public mutating func set(_ key: Key, _ value: consuming Value) throws(Self.Error) {
         if let existingKeyIndex = _keys.index(key) {
             _ = _values.replace(at: existingKeyIndex.retag(Value.self), with: value)
         } else {
@@ -347,7 +347,7 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Static where Value: ~Cop
     /// - Throws: ``Dictionary/Ordered/Inline/Error/overflow`` if the dictionary is full
     ///   and the key is new.
     @inlinable
-    public mutating func set(_ key: Key, _ value: consuming Value) throws(Dictionary_Primitives_Core.Dictionary.Ordered.Static.Error) {
+    public mutating func set(_ key: Key, _ value: consuming Value) throws(Self.Error) {
         let hashValue = key.hashValue
 
         if let existingPosition = _hashTable.position(
