@@ -34,6 +34,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     /// var dict = try Dictionary<String, FileHandle>.Ordered.Bounded(capacity: 5)
     /// try dict.set("primary", FileHandle())
     /// ```
+    // WHY: Category D — structural Sendable workaround; the type is
+    // WHY: structurally value-safe but the compiler cannot synthesize
+    // WHY: Sendable due to a stored pointer / generic parameter shape.
     @safe
     public struct Bounded: ~Copyable {
         public var _keys: Set<Key>.Ordered

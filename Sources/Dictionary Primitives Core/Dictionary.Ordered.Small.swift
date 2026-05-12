@@ -40,6 +40,9 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
     ///
     /// `Dictionary.Ordered.Small` is unconditionally `~Copyable` (move-only) because it requires
     /// a deinitializer to clean up inline storage.
+    // WHY: Category D — structural Sendable workaround; the type is
+    // WHY: structurally value-safe but the compiler cannot synthesize
+    // WHY: Sendable due to a stored pointer / generic parameter shape.
     @safe
     public struct Small<let inlineCapacity: Int>: ~Copyable {
         /// Element cleanup is handled by Storage.Inline's deinit (inline path) or Storage.Heap's deinit (spilled path).

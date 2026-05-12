@@ -77,6 +77,9 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
     /// - ``Dictionary/Ordered/Bounded``: Fixed-capacity, throws on overflow
     /// - ``Dictionary/Ordered/Inline``: Zero-allocation inline storage with compile-time capacity
     /// - ``Dictionary/Ordered/Small``: Inline storage with automatic spill to heap
+    // WHY: Category D — structural Sendable workaround; the type is
+    // WHY: structurally value-safe but the compiler cannot synthesize
+    // WHY: Sendable due to a stored pointer / generic parameter shape.
     @safe
     public struct Ordered: ~Copyable {
 

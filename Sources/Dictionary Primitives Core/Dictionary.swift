@@ -82,6 +82,9 @@ public import Set_Primitives
 /// ├── _keys: Buffer<Key>.Slab             — sparse key storage
 /// └── _values: Buffer<Value>.Slab         — sparse value storage
 /// ```
+// WHY: Category D — structural Sendable workaround; the type is
+// WHY: structurally value-safe but the compiler cannot synthesize
+// WHY: Sendable due to a stored pointer / generic parameter shape.
 @safe
 public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
