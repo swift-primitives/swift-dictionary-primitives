@@ -51,4 +51,4 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
 
 // MARK: - Sendable
 
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Static: Sendable where Key: Sendable, Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Static: @unsafe @unchecked Sendable where Key: Sendable, Value: Sendable {}
