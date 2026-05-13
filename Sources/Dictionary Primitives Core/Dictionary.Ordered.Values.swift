@@ -198,4 +198,4 @@ extension Dictionary_Primitives_Core.Dictionary.Ordered.Values: Swift.Sequence {
     }
 }
 
-extension Dictionary_Primitives_Core.Dictionary.Ordered.Values.Iterator: @unsafe @unchecked Sendable where Value: Sendable {}
+extension Dictionary_Primitives_Core.Dictionary.Ordered.Values.Iterator: Sendable where Value: Sendable {}
