@@ -9,8 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-internal import Buffer_Linear_Primitives
-public import Buffer_Slab_Primitives
+public import Buffer_Slab_Primitive
 internal import Hash_Table_Primitives
 public import Index_Primitives
 public import Set_Primitives

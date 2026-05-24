@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Linear_Primitive
+
 extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
 
     /// An ordered dictionary that preserves insertion order, supporting move-only values.

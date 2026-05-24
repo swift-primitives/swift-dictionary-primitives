@@ -9,6 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Linear_Primitive
+public import Buffer_Linear_Bounded_Primitive
+
 extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
 
     /// A fixed-capacity ordered dictionary that throws on overflow.

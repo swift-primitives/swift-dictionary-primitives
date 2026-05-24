@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Slab_Primitive
 public import Dictionary_Primitives_Core
 internal import Index_Primitives
 internal import Sequence_Primitives

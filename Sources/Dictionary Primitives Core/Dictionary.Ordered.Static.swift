@@ -9,7 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Buffer_Linear_Inline_Primitives
+public import Buffer_Linear_Primitive
+public import Buffer_Linear_Inline_Primitives
 import Hash_Table_Primitives
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {

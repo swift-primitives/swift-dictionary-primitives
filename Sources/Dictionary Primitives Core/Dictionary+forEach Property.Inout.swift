@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Slab_Primitives
+public import Buffer_Slab_Primitive
 
 // MARK: - forEach { } (borrowing key-value pairs)
 

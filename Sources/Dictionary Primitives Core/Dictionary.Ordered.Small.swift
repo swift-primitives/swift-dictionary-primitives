@@ -9,8 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Buffer_Linear_Inline_Primitives
-import Buffer_Linear_Small_Primitives
+public import Buffer_Linear_Primitive
+public import Buffer_Linear_Inline_Primitives
+public import Buffer_Linear_Small_Primitive
+public import Buffer_Linear_Small_Primitives
 import Index_Primitives
 import Set_Primitives
 

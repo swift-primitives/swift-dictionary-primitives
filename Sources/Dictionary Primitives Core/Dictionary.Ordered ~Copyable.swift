@@ -9,6 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Linear_Primitive
+public import Buffer_Linear_Bounded_Primitive
+public import Buffer_Linear_Small_Primitive
+public import Buffer_Linear_Inline_Primitives
 public import Index_Primitives
 
 // MARK: - Initialization (~Copyable)

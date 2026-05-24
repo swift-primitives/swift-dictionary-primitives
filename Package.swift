@@ -61,8 +61,13 @@ let package = Package(
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
+                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Slab Primitives", package: "swift-buffer-slab-primitives"),
+                .product(name: "Buffer Linear Bounded Primitive", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linear Inline Primitives", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linear Small Primitive", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linear Small Primitives", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
             ]
         ),
 
@@ -74,6 +79,9 @@ let package = Package(
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
+                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linear Inline Primitives", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linear Small Primitive", package: "swift-buffer-linear-primitives"),
             ]
         ),
 
@@ -83,6 +91,8 @@ let package = Package(
             dependencies: [
                 "Dictionary Primitives Core",
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
+                .product(name: "Buffer Linear Bounded Primitive", package: "swift-buffer-linear-primitives"),
             ]
         ),
 
@@ -93,6 +103,7 @@ let package = Package(
                 "Dictionary Primitives Core",
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
+                .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
             ]
         ),
 

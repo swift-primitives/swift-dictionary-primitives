@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Slab_Primitives
+public import Buffer_Slab_Primitive
 public import Hash_Table_Primitives
 public import Index_Primitives
 

@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Linear_Primitive
+public import Buffer_Linear_Primitives
 public import Index_Primitives
 public import Set_Primitives
 
