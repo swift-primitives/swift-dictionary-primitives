@@ -12,6 +12,7 @@
 public import Buffer_Slab_Primitive
 public import Hash_Table_Primitives
 public import Index_Primitives
+public import Buffer_Linear_Inline_Primitive
 
 // MARK: - Lookup
 

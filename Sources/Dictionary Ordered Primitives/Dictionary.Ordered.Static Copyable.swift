@@ -13,6 +13,7 @@ public import Buffer_Linear_Primitive
 public import Dictionary_Primitives_Core
 public import Index_Primitives
 internal import Sequence_Primitives
+public import Buffer_Linear_Inline_Primitive
 
 // Note: Dictionary.Ordered.Static is unconditionally ~Copyable (inline storage requires deinit),
 // so it cannot conform to Swift.Sequence which requires Copyable.

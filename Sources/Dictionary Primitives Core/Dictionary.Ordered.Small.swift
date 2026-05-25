@@ -15,6 +15,7 @@ public import Buffer_Linear_Small_Primitive
 public import Buffer_Linear_Small_Primitives
 import Index_Primitives
 import Set_Primitives
+public import Buffer_Linear_Inline_Primitive
 
 extension Dictionary_Primitives_Core.Dictionary.Ordered where Value: ~Copyable {
 
