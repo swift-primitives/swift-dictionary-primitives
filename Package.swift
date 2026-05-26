@@ -21,14 +21,6 @@ let package = Package(
             targets: ["Dictionary Primitives Core"]
         ),
         .library(
-            name: "Dictionary Ordered Primitives",
-            targets: ["Dictionary Ordered Primitives"]
-        ),
-        .library(
-            name: "Dictionary Bounded Primitives",
-            targets: ["Dictionary Bounded Primitives"]
-        ),
-        .library(
             name: "Dictionary Slab Primitives",
             targets: ["Dictionary Slab Primitives"]
         ),
@@ -47,7 +39,6 @@ let package = Package(
         .package(path: "../swift-sequence-primitives"),
         .package(path: "../swift-property-primitives"),
         .package(path: "../swift-buffer-primitives"),
-        .package(path: "../swift-buffer-linear-primitives"),
         .package(path: "../swift-buffer-slab-primitives"),
     ],
     targets: [
@@ -61,38 +52,7 @@ let package = Package(
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
-                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Bounded Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Inline Primitives", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Small Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Small Primitives", package: "swift-buffer-linear-primitives"),
                 .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
-            ]
-        ),
-
-        // MARK: - Ordered
-        .target(
-            name: "Dictionary Ordered Primitives",
-            dependencies: [
-                "Dictionary Primitives Core",
-                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Property Primitives", package: "swift-property-primitives"),
-                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Inline Primitives", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Small Primitive", package: "swift-buffer-linear-primitives"),
-            ]
-        ),
-
-        // MARK: - Bounded
-        .target(
-            name: "Dictionary Bounded Primitives",
-            dependencies: [
-                "Dictionary Primitives Core",
-                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
-                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Bounded Primitive", package: "swift-buffer-linear-primitives"),
             ]
         ),
 
@@ -112,8 +72,6 @@ let package = Package(
             name: "Dictionary Primitives",
             dependencies: [
                 "Dictionary Primitives Core",
-                "Dictionary Ordered Primitives",
-                "Dictionary Bounded Primitives",
                 "Dictionary Slab Primitives",
             ]
         ),
