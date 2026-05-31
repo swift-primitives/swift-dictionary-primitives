@@ -40,17 +40,6 @@
       "scope": null
     },
     {
-      "file": "dictionary-operations-audit.md",
-      "displayName": "dictionary-operations-audit",
-      "topic": "Inventory of all public operations mapped against canonical Dictionary/Map ADT",
-      "date": "2026-02-16",
-      "status": "RECOMMENDATION",
-      "statusDetail": null,
-      "statusRaw": "RECOMMENDATION",
-      "tier": null,
-      "scope": null
-    },
-    {
       "file": "dictionary-removal-strategies.md",
       "displayName": "dictionary-removal-strategies",
       "topic": "O(1) removal strategies: swap-remove, slab-backed, linked-backed",
@@ -69,17 +58,6 @@
       "status": "DECISION",
       "statusDetail": null,
       "statusRaw": "DECISION",
-      "tier": null,
-      "scope": null
-    },
-    {
-      "file": "audit.md",
-      "displayName": "audit.md",
-      "topic": "Pre-publication dependency-tree audit: multi-type error file (3 __-prefixed enums)",
-      "date": "2026-04-08",
-      "status": "LEGACY",
-      "statusDetail": null,
-      "statusRaw": "LEGACY",
       "tier": null,
       "scope": null
     }
