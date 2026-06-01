@@ -13,8 +13,8 @@ import Testing
 // These tests verify:
 // 1. Copyable conformance compiles and produces valid copies
 // 2. ARC lifetime management is correct (no double-free)
-// 3. Iterator captures independent snapshot for safe iteration
-// 4. Swift.Sequence conformance works through copies
+// 3. Iteration captures an independent snapshot for safe iteration
+// 4. Iterable (forEach) iteration works through copies
 
 @Suite("Dictionary Conditional Copyable")
 struct DictionaryCopyableTests {
@@ -166,7 +166,7 @@ struct DictionaryCopyableTests {
 
         let copy = dict
         var keys: [String] = []
-        for (key, _) in copy {
+        copy.forEach { key, _ in
             keys.append(key)
         }
         #expect(keys.sorted() == ["a", "b", "c"])
@@ -178,18 +178,15 @@ struct DictionaryCopyableTests {
         dict.set("a", 1)
         dict.set("b", 2)
 
-        // Iterator copies slab storage at creation (Dictionary Copyable.swift:40)
-        var iter = dict.makeIterator()
+        // Materialise a snapshot via the `Iterable` floor before mutating.
+        let snapshot = toArray(dict)
 
-        // Mutate after iterator creation
+        // Mutate after the snapshot is taken
         dict.set("c", 3)
         _ = dict.remove("a")
 
-        // Iterator sees snapshot from creation time
-        var iterKeys: [String] = []
-        while let pair = iter.next() {
-            iterKeys.append(pair.key)
-        }
+        // Snapshot reflects the state at materialisation time, independent of mutations
+        let iterKeys = snapshot.map(\.key)
         #expect(iterKeys.sorted() == ["a", "b"])
     }
 
@@ -201,7 +198,7 @@ struct DictionaryCopyableTests {
         }
 
         var count = 0
-        for (key, value) in dict {
+        dict.forEach { key, value in
             #expect(key.hasPrefix("k"))
             #expect(value >= 0 && value < 50)
             count += 1

@@ -37,6 +37,7 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-collection-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-input-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-property-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-slab-primitives.git", branch: "main"),
@@ -62,6 +63,9 @@ let package = Package(
             dependencies: [
                 "Dictionary Primitives Core",
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
+                .product(name: "Iterable", package: "swift-iterator-primitives"),
+                .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
                 .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
             ]
@@ -83,6 +87,7 @@ let package = Package(
                 "Dictionary Primitives",
                 .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
                 .product(name: "Tagged Primitives Test Support", package: "swift-tagged-primitives"),
+                .product(name: "Iterable", package: "swift-iterator-primitives"),
             ]
         ),
 

@@ -130,13 +130,16 @@ extension Dictionary_Primitives_Core.Dictionary: Copyable where Value: Copyable 
 
 extension Dictionary_Primitives_Core.Dictionary: @unsafe @unchecked Sendable where Key: Sendable, Value: Sendable {}
 
-// MARK: - Swift.Sequence/Collection Conformances
+// MARK: - Iteration Conformances
 //
-// Per [REFACTOR-002]: Swift.Sequence and Collection conformances are in separate variant modules
-// to avoid constraint poisoning. These protocols implicitly require Element: Copyable.
+// Iteration is provided by the span-primitive model (recipe-2, non-contiguous) in the
+// `Dictionary Slab Primitives` variant module, gated `where Value: Copyable`:
+// - `Iterable` (multipass, borrowing) via `Iterator.Materializing` over the scalar iterator
+// - `Sequenceable` (single-pass, consuming) via the scalar iterator directly
+// - `Sequence.Clearable` (enables `.forEach.consuming { }`)
 //
-// Variant modules:
-// - Dictionary Ordered Primitives: Swift.Sequence, Collection, BidirectionalCollection, RandomAccessCollection
-// - Dictionary Bounded Primitives: Swift.Sequence
+// `Dictionary` (unordered, slab-backed, NON-CONTIGUOUS) does NOT conform to `Swift.Sequence`,
+// `Swift.Collection`, or `Memory.Contiguous` — the dropped per-type stdlib bridges are a
+// deliberate consumer-facing removal matching the ordered exemplar.
 //
-// For ~Copyable values, use forEach(_:) or drain(_:).
+// For ~Copyable values, use the per-type `forEach(_:)` (Property.Borrow) or `drain(_:)`.

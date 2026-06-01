@@ -137,7 +137,7 @@ extension DictionaryTests.Unit {
     }
 }
 
-// MARK: - Swift.Sequence Tests
+// MARK: - Iteration Tests (Iterable / forEach)
 
 extension DictionaryTests.Unit {
 
@@ -149,7 +149,7 @@ extension DictionaryTests.Unit {
         dict.set("c", 3)
 
         var pairs: [(String, Int)] = []
-        for (key, value) in dict {
+        dict.forEach { key, value in
             pairs.append((key, value))
         }
         #expect(pairs.count == 3)
@@ -162,21 +162,18 @@ extension DictionaryTests.Unit {
         var dict = Dictionary<String, Int>()
         dict.set("x", 10)
 
-        var iter = dict.makeIterator()
-        let first = iter.next()
-        #expect(first != nil)
-        #expect(first!.key == "x")
-        #expect(first!.value == 10)
-
-        let second = iter.next()
-        #expect(second == nil)
+        // Materialise via the `Iterable` floor (the public multipass iteration face).
+        let pairs = toArray(dict)
+        #expect(pairs.count == 1)
+        #expect(pairs.first?.key == "x")
+        #expect(pairs.first?.value == 10)
     }
 
     @Test
     func `for-in on empty dictionary produces no iterations`() {
         let dict = Dictionary<String, Int>()
         var count = 0
-        for _ in dict {
+        dict.forEach { _ in
             count += 1
         }
         #expect(count == 0)
@@ -347,7 +344,7 @@ extension DictionaryTests.Integration {
 
         // Iterate
         var keys: [String] = []
-        for (key, _) in dict {
+        dict.forEach { key, _ in
             keys.append(key)
         }
         #expect(keys.sorted() == ["a", "c", "d"])
