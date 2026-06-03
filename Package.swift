@@ -30,8 +30,17 @@ let package = Package(
         ),
     ],
     dependencies: [
+        // Changed-package chain (W3 tower) → canonical-basename path-deps so SwiftPM's
+        // root-local-override unifies path-dep + transitive-url under ONE identity (Finding 7/10).
+        .package(path: "../swift-buffer-slab-primitives"),
+        .package(path: "../swift-buffer-primitives"),
+        .package(path: "../swift-hash-table-primitives"),
+        .package(path: "../swift-storage-primitives"),
+        .package(path: "../swift-store-primitives"),
+        .package(path: "../swift-growth-primitives"),
+        .package(path: "../swift-memory-primitives"),
+        // Unchanged deps stay url (their transitive changed-refs unify via the path-deps above).
         .package(url: "https://github.com/swift-primitives/swift-set-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-hash-table-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-tagged-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-collection-primitives.git", branch: "main"),
@@ -39,8 +48,6 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-property-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-buffer-slab-primitives.git", branch: "main"),
     ],
     targets: [
 

@@ -49,10 +49,10 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         public typealias Element = (key: Key, value: Value)
 
         @usableFromInline
-        let _keys: Buffer<Key>.Slab
+        let _keys: Buffer<Storage<Key>.Heap>.Slab
 
         @usableFromInline
-        let _values: Buffer<Value>.Slab
+        let _values: Buffer<Storage<Value>.Heap>.Slab
 
         @usableFromInline
         var _occupiedSlots: Bit.Vector.Ones.Bounded.Iterator

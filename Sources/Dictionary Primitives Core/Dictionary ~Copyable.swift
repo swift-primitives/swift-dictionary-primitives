@@ -43,8 +43,8 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
             _hashTable.remove.all(keepingCapacity: true)
         } else {
             // Slab deinit handles element cleanup when replaced
-            _keys = Buffer<Key>.Slab(minimumCapacity: .zero)
-            _values = Buffer<Value>.Slab(minimumCapacity: _keys.capacity.retag(Value.self))
+            _keys = Buffer<Storage<Key>.Heap>.Slab(minimumCapacity: .zero)
+            _values = Buffer<Storage<Value>.Heap>.Slab(minimumCapacity: _keys.capacity.retag(Value.self))
             _hashTable.remove.all(keepingCapacity: false)
         }
     }
@@ -131,11 +131,11 @@ extension Dictionary_Primitives_Core.Dictionary where Value: ~Copyable {
             occupancy + occupancy
         )
 
-        var newKeys = Buffer<Key>.Slab(minimumCapacity: newCapacity)
+        var newKeys = Buffer<Storage<Key>.Heap>.Slab(minimumCapacity: newCapacity)
         // Use keys' actual capacity so values.capacity >= keys.capacity.
         // ManagedBuffer rounds up differently per element stride — without this,
         // a slot valid for keys could exceed values' bitmap bounds.
-        var newValues = Buffer<Value>.Slab(minimumCapacity: newKeys.capacity.retag(Value.self))
+        var newValues = Buffer<Storage<Value>.Heap>.Slab(minimumCapacity: newKeys.capacity.retag(Value.self))
         var newHashTable = Hash.Table<Key>(minimumCapacity: newCapacity)
 
         // Typed while loop: mutating during iteration requires manual control.
