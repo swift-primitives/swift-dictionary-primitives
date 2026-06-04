@@ -40,6 +40,7 @@ let package = Package(
         .package(path: "../swift-growth-primitives"),
         .package(path: "../swift-memory-primitives"),
         // Unchanged deps stay url (their transitive changed-refs unify via the path-deps above).
+        .package(url: "https://github.com/swift-primitives/swift-bit-vector-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-set-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-tagged-primitives.git", branch: "main"),
@@ -75,6 +76,10 @@ let package = Package(
                 .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
                 .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
+                // The Slab iterator walks occupied slots via the bitmap's
+                // `Bit.Vector.Ones.Bounded.Iterator` (Buffer.Slab.occupiedSlots);
+                // buffer-slab does not re-export it at the type-module level.
+                .product(name: "Bit Vector Bounded Primitives", package: "swift-bit-vector-primitives"),
             ]
         ),
 

@@ -12,6 +12,7 @@
 public import Buffer_Slab_Primitive
 public import Dictionary_Primitives_Core
 public import Iterator_Primitive
+public import Bit_Vector_Bounded_Primitives
 internal import Index_Primitives
 internal import Sequence_Primitives
 
