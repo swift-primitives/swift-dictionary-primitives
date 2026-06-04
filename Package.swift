@@ -36,8 +36,8 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-hash-table-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-storage-primitives.git", branch: "main"),
-        .package(path: "../swift-store-primitives"),
-        .package(path: "../swift-growth-primitives"),
+        .package(url: "https://github.com/swift-primitives/swift-store-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-growth-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-memory-primitives.git", branch: "main"),
         // Unchanged deps stay url (their transitive changed-refs unify via the path-deps above).
         .package(url: "https://github.com/swift-primitives/swift-bit-vector-primitives.git", branch: "main"),
