@@ -18,11 +18,11 @@ public import Iterator_Chunk_Primitives
 //
 // The divergent pair type has NO contiguous span of `(key, value)` pairs, so — unlike
 // the contiguous single-element containers (set-ordered/stack/heap) which vend
-// `Iterator.Chunk` over a `Memory.Contiguous.Protocol` span — `Dictionary` produces its
+// `Iterator.Chunk` over a `Span.Protocol` span — `Dictionary` produces its
 // bulk iterator by wrapping the scalar `Iterator` in `Iterator.Materializing`, the
 // span-primitive adapter for generator-style sequences (the same shape `Single` /
 // `Cyclic.Group.Static` use). The dictionary therefore does NOT conform
-// `Memory.Contiguous.Protocol` (no pair span exists) — this is NON-CONTIGUOUS storage.
+// `Span.Protocol` (no pair span exists) — this is NON-CONTIGUOUS storage.
 //
 // Both `Iterable` and `Sequenceable` declare `associatedtype Iterator`, which Swift
 // unifies across protocols; the dual conformer splits the two bindings with

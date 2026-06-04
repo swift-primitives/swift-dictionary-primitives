@@ -21,7 +21,7 @@ import Testing
 // Swift Testing discovery limitation. See swiftlang/swift-testing#1508.
 //
 // Note: Dictionary (unordered) is conditionally Copyable when Value: Copyable,
-// but uses REFERENCE SEMANTICS — copies share Storage.Slab. No CoW is implemented.
+// but uses REFERENCE SEMANTICS — copies share the Slab buffer's backing storage. No CoW is implemented.
 // Copy independence tests belong on Dictionary.Ordered (which has CoW).
 
 @Suite("Dictionary")

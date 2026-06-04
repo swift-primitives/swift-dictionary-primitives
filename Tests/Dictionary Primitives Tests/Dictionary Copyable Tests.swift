@@ -7,8 +7,9 @@ import Testing
 // MARK: - Dictionary Conditional Copyable Tests
 //
 // Dictionary (unordered) is conditionally Copyable when Value: Copyable.
-// Uses REFERENCE SEMANTICS — copies share Storage.Slab (class). Headers (struct)
-// are independent value copies. No Copy-on-Write is implemented.
+// Uses REFERENCE SEMANTICS — copies share the backing storage of
+// `Buffer<Storage<Key>.Heap>.Slab` (whose internal `Box` is the reference-semantics
+// class). Headers (struct) are independent value copies. No Copy-on-Write is implemented.
 //
 // These tests verify:
 // 1. Copyable conformance compiles and produces valid copies
@@ -122,7 +123,7 @@ struct DictionaryCopyableTests {
 
         let copy = original!
         original = nil
-        // Original dropped — Storage.Slab alive via copy's ARC reference
+        // Original dropped — the Slab buffer's backing Box alive via copy's ARC reference
         #expect(copy.count == 2)
         #expect(copy.contains("a") == true)
         #expect(copy.contains("b") == true)
@@ -138,7 +139,7 @@ struct DictionaryCopyableTests {
         original = nil
         #expect(copy!.count == 2)
         copy = nil
-        // No crash = ARC correctly manages Storage.Slab lifetime
+        // No crash = ARC correctly manages the Slab buffer's backing Box lifetime
     }
 
     @Test
