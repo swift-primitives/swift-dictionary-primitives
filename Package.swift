@@ -32,13 +32,13 @@ let package = Package(
     dependencies: [
         // Changed-package chain (W3 tower) → canonical-basename path-deps so SwiftPM's
         // root-local-override unifies path-dep + transitive-url under ONE identity (Finding 7/10).
-        .package(path: "../swift-buffer-slab-primitives"),
-        .package(path: "../swift-buffer-primitives"),
-        .package(path: "../swift-hash-table-primitives"),
-        .package(path: "../swift-storage-primitives"),
+        .package(url: "https://github.com/swift-primitives/swift-buffer-slab-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-hash-table-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-storage-primitives.git", branch: "main"),
         .package(path: "../swift-store-primitives"),
         .package(path: "../swift-growth-primitives"),
-        .package(path: "../swift-memory-primitives"),
+        .package(url: "https://github.com/swift-primitives/swift-memory-primitives.git", branch: "main"),
         // Unchanged deps stay url (their transitive changed-refs unify via the path-deps above).
         .package(url: "https://github.com/swift-primitives/swift-bit-vector-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-set-primitives.git", branch: "main"),
