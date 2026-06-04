@@ -20,9 +20,10 @@ import Testing
 // [TEST-004] Generic type specializations use parallel namespace pattern due to
 // Swift Testing discovery limitation. See swiftlang/swift-testing#1508.
 //
-// Note: Dictionary (unordered) is conditionally Copyable when Value: Copyable,
-// but uses REFERENCE SEMANTICS — copies share the Slab buffer's backing storage. No CoW is implemented.
-// Copy independence tests belong on Dictionary.Ordered (which has CoW).
+// Note: Dictionary (unordered) is conditionally Copyable when Value: Copyable.
+// Copies share each plane's Slab-buffer storage until a mutation diverges it:
+// Copy-on-Write IS implemented (see `Dictionary+CoW.swift`). Copy-independence /
+// divergence tests live in `Dictionary CoW Tests.swift`.
 
 @Suite("Dictionary")
 struct DictionaryTests {

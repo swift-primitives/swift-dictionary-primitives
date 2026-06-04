@@ -42,10 +42,12 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
     ///
     /// - Complexity: O(count) total via bitmap iteration, not O(capacity).
     ///
-    /// - Note: The iterator stores shallow reference copies of `Buffer.Slab` storage.
-    ///   Without CoW on unordered `Dictionary` mutations, a stored iterator could observe
-    ///   inconsistent state if the dictionary is mutated between `next()` calls. Safe
-    ///   under borrow semantics (which prevent mutation during iteration).
+    /// - Note: The iterator captures each plane's `Buffer.Slab` (sharing its
+    ///   `Box`) at creation, giving it an independent snapshot. Under the
+    ///   copy-on-write contract (see ``Dictionary+CoW``) a subsequent dictionary
+    ///   mutation diverges the dictionary's plane into a fresh `Box`, leaving the
+    ///   iterator's captured `Box` untouched — so a stored iterator observes a
+    ///   stable snapshot even across mutations between `next()` calls.
     public struct Iterator: Iterator_Primitive.Iterator.`Protocol`, IteratorProtocol {
         public typealias Element = (key: Key, value: Value)
 

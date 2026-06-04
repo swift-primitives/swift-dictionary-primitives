@@ -55,7 +55,10 @@ public import Set_Primitives
 //
 // - Keys must conform to Hash.Protocol (supports ~Copyable keys)
 // - Values may be ~Copyable (move-only)
-// - Copy-on-Write only applies when Value: Copyable
+// - Copy-on-Write applies when Value: Copyable (see ``Dictionary+CoW``): copies
+//   share each plane's storage until a mutation diverges exactly the plane(s) it
+//   mutates. ~Copyable-value dictionaries are not Copyable, cannot be aliased,
+//   and take no routing.
 // - Base methods use `consuming Value`; CoW methods use `Value`
 //
 // ===----------------------------------------------------------------------===//

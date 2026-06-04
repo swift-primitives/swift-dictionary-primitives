@@ -7,15 +7,20 @@ import Testing
 // MARK: - Dictionary Conditional Copyable Tests
 //
 // Dictionary (unordered) is conditionally Copyable when Value: Copyable.
-// Uses REFERENCE SEMANTICS — copies share the backing storage of
-// `Buffer<Storage<Key>.Heap>.Slab` (whose internal `Box` is the reference-semantics
-// class). Headers (struct) are independent value copies. No Copy-on-Write is implemented.
+// Copying SHARES storage: each plane (`_keys`, `_values`) is a
+// `Buffer<Storage<…>.Heap>.Slab` whose internal `Box` is a reference-semantics
+// class, so a copy shares those boxes until a mutation diverges them.
+// Copy-on-Write IS implemented (see `Dictionary+CoW.swift`): each mutating op
+// installs a private deep copy of the plane(s) it mutates BEFORE writing
+// (`ensureUnique()`), so copies are observationally independent.
 //
 // These tests verify:
 // 1. Copyable conformance compiles and produces valid copies
 // 2. ARC lifetime management is correct (no double-free)
 // 3. Iteration captures an independent snapshot for safe iteration
 // 4. Iterable (forEach) iteration works through copies
+// 5. Copy-on-Write divergence: mutating one side does not affect a copy,
+//    per plane (keys / values) separately (see `Dictionary CoW Tests.swift`)
 
 @Suite("Dictionary Conditional Copyable")
 struct DictionaryCopyableTests {
