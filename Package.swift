@@ -39,6 +39,8 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-store-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-growth-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-memory-primitives.git", branch: "main"),
+        // E2 (storage-small-substrate.md): verbose Storage.Contiguous<Memory.Heap> needs direct memory-heap dep (MemberImportVisibility).
+        .package(url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git", branch: "main"),
         // Unchanged deps stay url (their transitive changed-refs unify via the path-deps above).
         .package(url: "https://github.com/swift-primitives/swift-bit-vector-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-set-primitives.git", branch: "main"),
@@ -62,6 +64,8 @@ let package = Package(
                 .product(name: "Collection Primitives", package: "swift-collection-primitives"),
                 .product(name: "Input Primitives", package: "swift-input-primitives"),
                 .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
+                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
+                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
             ]
         ),
 
@@ -70,6 +74,8 @@ let package = Package(
             name: "Dictionary Slab Primitives",
             dependencies: [
                 "Dictionary Primitives Core",
+                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
+                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
                 .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
                 .product(name: "Iterable", package: "swift-iterator-primitives"),

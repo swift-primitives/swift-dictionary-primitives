@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Slab_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Hash_Table_Primitives
 public import Index_Primitives
 
@@ -17,7 +19,7 @@ public import Index_Primitives
 //
 // `Dictionary` shares storage on copy: when `Value: Copyable`, copying a
 // dictionary shares the `Box` of EACH plane (`_keys`, `_values`) — both are
-// `Buffer<Storage<…>.Heap>.Slab` whose internal cleanup oracle is a reference
+// `Buffer<Storage<…>.Contiguous<Memory.Heap<…>>>.Slab` whose internal cleanup oracle is a reference
 // `Box` (buffer-slab Box-relocation). Copies are observationally independent
 // because each mutating op installs a private deep copy of the plane(s) it
 // mutates BEFORE writing, via the slab's occupancy-aware `ensureUnique()`.
@@ -167,8 +169,8 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         } else {
             // Wholesale replacement: reassignment installs fresh boxes; an
             // aliasing copy keeps the old boxes untouched. No routing needed.
-            _keys = Buffer<Storage<Key>.Heap>.Slab(minimumCapacity: .zero)
-            _values = Buffer<Storage<Value>.Heap>.Slab(minimumCapacity: _keys.capacity.retag(Value.self))
+            _keys = Buffer<Storage<Key>.Contiguous<Memory.Heap<Key>>>.Slab(minimumCapacity: .zero)
+            _values = Buffer<Storage<Value>.Contiguous<Memory.Heap<Value>>>.Slab(minimumCapacity: _keys.capacity.retag(Value.self))
             _hashTable.remove.all(keepingCapacity: false)
         }
     }

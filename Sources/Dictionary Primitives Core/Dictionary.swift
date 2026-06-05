@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Slab_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 internal import Hash_Table_Primitives
 public import Index_Primitives
 public import Set_Primitives
@@ -81,8 +83,8 @@ public import Set_Primitives
 /// ```
 /// Dictionary<Key, Value>
 /// ├── _hashTable: Hash.Table<Key>         — hash-to-position lookup
-/// ├── _keys: Buffer<Storage<Key>.Heap>.Slab             — sparse key storage
-/// └── _values: Buffer<Storage<Value>.Heap>.Slab         — sparse value storage
+/// ├── _keys: Buffer<Storage<Key>.Contiguous<Memory.Heap<Key>>>.Slab             — sparse key storage
+/// └── _values: Buffer<Storage<Value>.Contiguous<Memory.Heap<Value>>>.Slab         — sparse value storage
 /// ```
 // WHY: Category D — structural Sendable workaround; the type is
 // WHY: structurally value-safe but the compiler cannot synthesize
@@ -94,9 +96,9 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 
     public var _hashTable: Hash.Table<Key>
 
-    public var _keys: Buffer<Storage<Key>.Heap>.Slab
+    public var _keys: Buffer<Storage<Key>.Contiguous<Memory.Heap<Key>>>.Slab
 
-    public var _values: Buffer<Storage<Value>.Heap>.Slab
+    public var _values: Buffer<Storage<Value>.Contiguous<Memory.Heap<Value>>>.Slab
 
     // MARK: - Init
 
@@ -107,11 +109,11 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
     @inlinable
     public init(minimumCapacity: Index_Primitives.Index<Key>.Count = .zero) {
         self._hashTable = Hash.Table<Key>(minimumCapacity: minimumCapacity)
-        self._keys = Buffer<Storage<Key>.Heap>.Slab(minimumCapacity: minimumCapacity)
+        self._keys = Buffer<Storage<Key>.Contiguous<Memory.Heap<Key>>>.Slab(minimumCapacity: minimumCapacity)
         // Use keys' actual capacity so values.capacity >= keys.capacity.
         // ManagedBuffer rounds up differently per element stride — without this,
         // a slot valid for keys could exceed values' bitmap bounds.
-        self._values = Buffer<Storage<Value>.Heap>.Slab(minimumCapacity: self._keys.capacity.retag(Value.self))
+        self._values = Buffer<Storage<Value>.Contiguous<Memory.Heap<Value>>>.Slab(minimumCapacity: self._keys.capacity.retag(Value.self))
     }
 
     // Note: No explicit deinit needed — Buffer.Slab handles cleanup via bitmap-driven deinitialization
@@ -123,8 +125,8 @@ public struct Dictionary<Key: Hash.`Protocol`, Value: ~Copyable>: ~Copyable {
 ///
 /// This works because when `Value: Copyable`:
 /// - `Hash.Table<Key>`: already conditionally Copyable
-/// - `Buffer<Storage<Key>.Heap>.Slab`: Copyable (Key is always Copyable via `Hash.Protocol`)
-/// - `Buffer<Storage<Value>.Heap>.Slab`: Copyable when Value: Copyable
+/// - `Buffer<Storage<Key>.Contiguous<Memory.Heap<Key>>>.Slab`: Copyable (Key is always Copyable via `Hash.Protocol`)
+/// - `Buffer<Storage<Value>.Contiguous<Memory.Heap<Value>>>.Slab`: Copyable when Value: Copyable
 extension Dictionary_Primitives_Core.Dictionary: Copyable where Value: Copyable {}
 
 // Note: Dictionary.Ordered.Small and Dictionary.Ordered.Static are UNCONDITIONALLY ~Copyable due to inline storage deinit

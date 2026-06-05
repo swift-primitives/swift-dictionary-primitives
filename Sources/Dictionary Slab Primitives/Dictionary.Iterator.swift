@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Slab_Primitive
+public import Memory_Heap_Primitives
+public import Storage_Contiguous_Primitives
 public import Dictionary_Primitives_Core
 public import Iterator_Primitive
 public import Bit_Vector_Bounded_Primitives
@@ -52,10 +54,10 @@ extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
         public typealias Element = (key: Key, value: Value)
 
         @usableFromInline
-        let _keys: Buffer<Storage<Key>.Heap>.Slab
+        let _keys: Buffer<Storage<Key>.Contiguous<Memory.Heap<Key>>>.Slab
 
         @usableFromInline
-        let _values: Buffer<Storage<Value>.Heap>.Slab
+        let _values: Buffer<Storage<Value>.Contiguous<Memory.Heap<Value>>>.Slab
 
         @usableFromInline
         var _occupiedSlots: Bit.Vector.Ones.Bounded.Iterator
