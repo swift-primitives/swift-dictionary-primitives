@@ -141,7 +141,6 @@ extension Dictionary_Primitives_Core.Dictionary: @unsafe @unchecked Sendable whe
 // `Dictionary Slab Primitives` variant module, gated `where Value: Copyable`:
 // - `Iterable` (multipass, borrowing) via `Iterator.Materializing` over the scalar iterator
 // - `Sequenceable` (single-pass, consuming) via the scalar iterator directly
-// - `Sequence.Clearable` (enables `.forEach.consuming { }`)
 //
 // `Dictionary` (unordered, slab-backed, NON-CONTIGUOUS) does NOT conform to `Swift.Sequence`,
 // `Swift.Collection`, or `Memory.Contiguous` — the dropped per-type stdlib bridges are a

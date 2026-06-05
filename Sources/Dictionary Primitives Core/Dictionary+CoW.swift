@@ -63,7 +63,7 @@ public import Index_Primitives
 // more-specialised member for Copyable values). They re-implement each op's
 // body — routing first, then the same logic the base performs — rather than
 // delegating (a delegating call would re-select these same shadows). The
-// `subscript` setter and `Sequence.Clearable.removeAll()` inherit divergence
+// `subscript` setter and the `removeAll()` method inherit divergence
 // transitively: they delegate to `set`/`remove`/`clear`, which resolve here.
 
 extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {

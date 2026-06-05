@@ -251,7 +251,7 @@ extension DictionaryTests.Unit {
     }
 }
 
-// MARK: - Sequence.Clearable Tests
+// MARK: - removeAll() Tests
 
 extension DictionaryTests.Unit {
 
