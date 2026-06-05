@@ -8,7 +8,7 @@ import Testing
 //
 // Dictionary (unordered) is conditionally Copyable when Value: Copyable.
 // Copying SHARES storage: each plane (`_keys`, `_values`) is a
-// `Buffer<Storage<…>.Heap>.Slab` whose internal `Box` is a reference-semantics
+// `Buffer<Storage<…>.Contiguous<Memory.Heap<…>>>.Slab` whose internal `Box` is a reference-semantics
 // class, so a copy shares those boxes until a mutation diverges them.
 // Copy-on-Write IS implemented (see `Dictionary+CoW.swift`): each mutating op
 // installs a private deep copy of the plane(s) it mutates BEFORE writing
