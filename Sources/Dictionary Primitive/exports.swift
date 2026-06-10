@@ -9,14 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Dictionary_Primitives_Core
-
-// MARK: - removeAll()
-
-extension Dictionary_Primitives_Core.Dictionary where Value: Copyable {
-    /// Removes all key-value pairs from the dictionary.
-    @inlinable
-    public mutating func removeAll() {
-        clear(keepingCapacity: false)
-    }
-}
+// Dictionary Primitive declares the base type: the column-generic
+// `struct Dictionary<S>` template plus its element vocabulary `Hash.Entry`
+// (the key-projected pair). The pinned membership surface lives in the
+// umbrella target's `Dictionary+Columns.swift`. No re-exports here — the
+// column packages are ordinary dependencies ([MOD-005]: umbrellas re-export
+// in-package targets only).

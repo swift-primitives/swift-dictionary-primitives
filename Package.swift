@@ -12,89 +12,77 @@ let package = Package(
         .visionOS(.v26)
     ],
     products: [
+        // MARK: - Base type
+        .library(
+            name: "Dictionary Primitive",
+            targets: ["Dictionary Primitive"]
+        ),
+
+        // MARK: - Umbrella
         .library(
             name: "Dictionary Primitives",
             targets: ["Dictionary Primitives"]
         ),
-        .library(
-            name: "Dictionary Primitives Core",
-            targets: ["Dictionary Primitives Core"]
-        ),
-        .library(
-            name: "Dictionary Slab Primitives",
-            targets: ["Dictionary Slab Primitives"]
-        ),
-        .library(
-            name: "Dictionary Primitives Test Support",
-            targets: ["Dictionary Primitives Test Support"]
-        ),
     ],
     dependencies: [
-        // Changed-package chain (W3 tower) → canonical-basename path-deps so SwiftPM's
-        // root-local-override unifies path-dep + transitive-url under ONE identity (Finding 7/10).
-        .package(url: "https://github.com/swift-primitives/swift-buffer-slab-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-hash-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-hash-table-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-shared-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-buffer-linear-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-storage-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-store-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-growth-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-memory-primitives.git", branch: "main"),
-        // E2 (storage-small-substrate.md): verbose Storage.Contiguous<Memory.Heap> needs direct memory-heap dep (MemberImportVisibility).
         .package(url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git", branch: "main"),
-        // Unchanged deps stay url (their transitive changed-refs unify via the path-deps above).
-        .package(url: "https://github.com/swift-primitives/swift-bit-vector-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-set-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-ordinal-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-tagged-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-collection-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-input-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-property-primitives.git", branch: "main"),
+        // NOTE: the iteration concern (swift-iterator-primitives), the Slab plane
+        // (swift-buffer-slab-primitives), and the old Core/Slab support deps are NOT
+        // dependencies — they retired with the two-planes shape (ADT-families leg 8).
+        // The keyed core is iteration-free; `forEach` rides the dense plane.
     ],
     targets: [
 
-        // MARK: - Core
+        // MARK: - Base type (struct Dictionary<S>: the ADT over the ordered hashed
+        // entry column + the key-projected `Hash.Entry` element vocabulary)
         .target(
-            name: "Dictionary Primitives Core",
+            name: "Dictionary Primitive",
             dependencies: [
-                .product(name: "Set Primitives", package: "swift-set-primitives"),
-                .product(name: "Hash Table Primitives", package: "swift-hash-table-primitives"),
+                .product(name: "Hash Indexed Primitive", package: "swift-hash-table-primitives"),
+                .product(name: "Hash Table Primitive", package: "swift-hash-table-primitives"),
+                .product(name: "Hash Primitives", package: "swift-hash-primitives"),
+                .product(name: "Shared Primitive", package: "swift-shared-primitives"),
+                .product(name: "Buffer Primitive", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
+                .product(name: "Storage Primitive", package: "swift-storage-primitives"),
+                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
+                .product(name: "Store Protocol Primitives", package: "swift-store-primitives"),
+                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
+                .product(name: "Memory Allocator Primitive", package: "swift-memory-allocation-primitives"),
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
-                .product(name: "Collection Primitives", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives", package: "swift-input-primitives"),
-                .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
-                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
-                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
             ]
         ),
 
-        // MARK: - Slab
-        .target(
-            name: "Dictionary Slab Primitives",
-            dependencies: [
-                "Dictionary Primitives Core",
-                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
-                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
-                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
-                .product(name: "Iterator Primitive", package: "swift-iterator-primitives"),
-                .product(name: "Iterable", package: "swift-iterator-primitives"),
-                .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
-                .product(name: "Property Primitives", package: "swift-property-primitives"),
-                .product(name: "Buffer Slab Primitive", package: "swift-buffer-slab-primitives"),
-                // The Slab iterator walks occupied slots via the bitmap's
-                // `Bit.Vector.Ones.Bounded.Iterator` (Buffer.Slab.occupiedSlots);
-                // buffer-slab does not re-export it at the type-module level.
-                .product(name: "Bit Vector Bounded Primitives", package: "swift-bit-vector-primitives"),
-            ]
-        ),
-
-        // MARK: - Umbrella
+        // MARK: - Umbrella (the pinned keyed surface + counts; re-exports the base)
         .target(
             name: "Dictionary Primitives",
             dependencies: [
-                "Dictionary Primitives Core",
-                "Dictionary Slab Primitives",
+                "Dictionary Primitive",
+                .product(name: "Hash Indexed Primitive", package: "swift-hash-table-primitives"),
+                .product(name: "Hash Table Primitive", package: "swift-hash-table-primitives"),
+                .product(name: "Hash Primitives", package: "swift-hash-primitives"),
+                .product(name: "Shared Primitive", package: "swift-shared-primitives"),
+                .product(name: "Buffer Primitive", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Protocol Primitives", package: "swift-buffer-primitives"),
+                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
+                .product(name: "Storage Primitive", package: "swift-storage-primitives"),
+                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
+                .product(name: "Store Protocol Primitives", package: "swift-store-primitives"),
+                .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
+                .product(name: "Memory Allocator Primitive", package: "swift-memory-allocation-primitives"),
+                .product(name: "Index Primitives", package: "swift-index-primitives"),
             ]
         ),
 
@@ -103,27 +91,12 @@ let package = Package(
             name: "Dictionary Primitives Tests",
             dependencies: [
                 "Dictionary Primitives",
-                .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
-                .product(name: "Tagged Primitives Test Support", package: "swift-tagged-primitives"),
-                .product(name: "Iterable", package: "swift-iterator-primitives"),
-            ]
-        ),
-
-        // MARK: - Test Support
-        .target(
-            name: "Dictionary Primitives Test Support",
-            dependencies: [
-                "Dictionary Primitives",
-                .product(name: "Set Primitives Test Support", package: "swift-set-primitives"),
                 .product(name: "Hash Table Primitives Test Support", package: "swift-hash-table-primitives"),
-                .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
-                .product(name: "Tagged Primitives Test Support", package: "swift-tagged-primitives"),
-                .product(name: "Collection Primitives Test Support", package: "swift-collection-primitives"),
-                .product(name: "Input Primitives Test Support", package: "swift-input-primitives"),
-                .product(name: "Sequence Primitives Test Support", package: "swift-sequence-primitives"),
                 .product(name: "Buffer Primitives Test Support", package: "swift-buffer-primitives"),
-            ],
-            path: "Tests/Support"
+                .product(name: "Hash Primitives Standard Library Integration", package: "swift-hash-primitives"),
+                .product(name: "Tagged Primitives Standard Library Integration", package: "swift-tagged-primitives"),
+                .product(name: "Ordinal Primitives Standard Library Integration", package: "swift-ordinal-primitives"),
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]
@@ -143,9 +116,7 @@ for target in package.targets where ![.system, .binary, .plugin, .macro].contain
         .enableUpcomingFeature("LifetimeDependence"),
     ]
 
-    let package: [SwiftSetting] = [
-        .enableExperimentalFeature("RawLayout"),
-    ]
+    let package: [SwiftSetting] = []
 
     target.swiftSettings = (target.swiftSettings ?? []) + ecosystem + package
 }
