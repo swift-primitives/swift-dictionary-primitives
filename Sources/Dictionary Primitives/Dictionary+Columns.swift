@@ -234,7 +234,24 @@ extension Dictionary where S: ~Copyable {
         store.removeAll(keepingCapacity: keepingCapacity)
     }
 
-    /// Removes all entries (`Shared` column; detaches first — siblings keep theirs).
+    /// Removes all entries (`Shared` column; detaches to a fresh box — siblings keep
+    /// theirs). The Copyable half of the [MEM-COPY-017] pair: with a Copyable entry,
+    /// `Shared(_:)` resolves to the strategy-CARRYING init, so the replacement box
+    /// stays forkable (ASK-W3-A: a single `~Copyable`-bounded overload selected the
+    /// strategy-less init, and removeAll → copy → mutate trapped the uniqueness gate).
+    @inlinable
+    public mutating func removeAll<K: Hash.Key, V>(keepingCapacity: Bool = true)
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+        let capacity: Index_Primitives.Index<Hash.Entry<K, V>>.Count = keepingCapacity ? store.capacity : .zero
+        self.store = Shared(
+            Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>(minimumCapacity: capacity)
+        )
+    }
+
+    /// Removes all entries (`Shared` column, move-only elements). The replacement box
+    /// is statically unique and carries NO clone strategy — lawful here: with a
+    /// move-only entry the dictionary itself is move-only (S5: copyability flows from
+    /// the column), so this box can never be forked and a strategy is unreachable.
     @inlinable
     public mutating func removeAll<K: Hash.Key & ~Copyable, V: ~Copyable>(keepingCapacity: Bool = true)
     where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {

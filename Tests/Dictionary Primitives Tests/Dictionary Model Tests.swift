@@ -480,23 +480,11 @@ private struct FleetStream {
         }
     }
 
-    // ASK-W3-A carve-out: the Shared `removeAll` rebuilds the box through the
-    // strategy-less init (Dictionary+Columns.swift:239), so wipe → fork → mutate
-    // traps. Mass removal sweeps the keyed door until the ruled fix lands; the
-    // disabled regression test below re-enables the real door.
     mutating func wipe(_ target: Int) {
-        verdict.record("sweep[\(target)] \(models[target].entries.count)")
-        while let entry = models[target].entries.last {
-            if let removed = siblings[target].removeValue(forKey: Key(id: entry.key, group: entry.group)) {
-                if removed.id != entry.value {
-                    verdict.diverged(["sweep removeValue returned id \(removed.id), model \(entry.value)"])
-                }
-                models[target].remove(at: models[target].entries.count - 1)
-            } else {
-                verdict.diverged(["sweep removeValue(k \(entry.key)) missed a live key on sibling \(target)"])
-                return
-            }
-        }
+        let keep = rng.chance(50)
+        verdict.record("wipe[\(target)] keep=\(keep)")
+        siblings[target].removeAll(keepingCapacity: keep)
+        models[target].removeAll()
     }
 
     func audit() -> [String] {
@@ -635,11 +623,9 @@ extension `Dictionary Model`.`Edge Case` {
         #expect(values == [100, 101, 999, 103, 104])
     }
 
-    @Test(.disabled("""
-    ASK-W3-A (REPORT-arc-model-tests-W3): the Shared removeAll rebuilds the box \
-    through the strategy-less init (Dictionary+Columns.swift:239) — fork-after-wipe \
-    then mutate traps at Shared+Unique.swift:77. Re-enable with the ruled fix.
-    """))
+    // The ASK-W3-A regression gate (trapped pre-fix; the [MEM-COPY-017] pair split
+    // keeps the post-wipe box strategy-carrying).
+    @Test
     func `forking after removeAll keeps both siblings independently mutable`() {
         let census = Model.Census()
         var first = CoWDictionary<Key, Value>(
