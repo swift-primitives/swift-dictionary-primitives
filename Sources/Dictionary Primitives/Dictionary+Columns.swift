@@ -38,7 +38,7 @@ extension Dictionary where S: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func insert<K: Hash.Key & ~Copyable, V: ~Copyable>(key: consuming K, value: consuming V) -> V?
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         if let slot = store.position(
             matching: key.hashValue,
             context: key,
@@ -58,7 +58,7 @@ extension Dictionary where S: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func insert<K: Hash.Key & ~Copyable, V: ~Copyable>(key: consuming K, value: consuming V) -> V?
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         store.withUnique(consuming: Hash.Entry(key: key, value: value)) { column, entry in
             if let slot = column.position(
                 matching: entry.hashValue,
@@ -87,7 +87,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(1) average
     @inlinable
     public func contains<K: Hash.Key & ~Copyable, V: ~Copyable>(key: borrowing K) -> Bool
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         store.position(
             matching: key.hashValue,
             context: key,
@@ -100,7 +100,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(1) average
     @inlinable
     public func contains<K: Hash.Key & ~Copyable, V: ~Copyable>(key: borrowing K) -> Bool
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         store.withColumn { column in
             column.position(
                 matching: key.hashValue,
@@ -116,7 +116,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(1) average, plus the closure
     @inlinable
     public func withValue<K: Hash.Key & ~Copyable, V: ~Copyable, R>(forKey key: borrowing K, _ body: (borrowing V) -> R) -> R?
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         guard let slot = store.position(
             matching: key.hashValue,
             context: key,
@@ -132,7 +132,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(1) average, plus the closure
     @inlinable
     public func withValue<K: Hash.Key & ~Copyable, V: ~Copyable, R>(forKey key: borrowing K, _ body: (borrowing V) -> R) -> R?
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         store.withColumn { column -> R? in
             guard let slot = column.position(
                 matching: key.hashValue,
@@ -158,7 +158,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(1) average, plus the closure
     @inlinable
     public mutating func withMutableValue<K: Hash.Key & ~Copyable, V: ~Copyable, R>(forKey key: borrowing K, _ body: (inout V) -> R) -> R?
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         guard let slot = store.position(
             matching: key.hashValue,
             context: key,
@@ -175,7 +175,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(1) average (O(`capacity`) when a copy must be made first), plus the closure
     @inlinable
     public mutating func withMutableValue<K: Hash.Key & ~Copyable, V: ~Copyable, R>(forKey key: borrowing K, _ body: (inout V) -> R) -> R?
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         store.withUnique { column -> R? in
             guard let slot = column.position(
                 matching: key.hashValue,
@@ -200,7 +200,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(n) from the removal point (order preservation)
     @inlinable
     public mutating func removeValue<K: Hash.Key & ~Copyable, V: ~Copyable>(forKey key: borrowing K) -> V?
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         guard let entry = store.remove(
             matching: key.hashValue,
             context: key,
@@ -214,7 +214,7 @@ extension Dictionary where S: ~Copyable {
     /// Removes the entry for the key (`Shared` column; uniqueness restored first).
     @inlinable
     public mutating func removeValue<K: Hash.Key & ~Copyable, V: ~Copyable>(forKey key: borrowing K) -> V?
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         store.withUnique { column -> V? in
             guard let entry = column.remove(
                 matching: key.hashValue,
@@ -230,7 +230,7 @@ extension Dictionary where S: ~Copyable {
     /// Removes all entries (direct column).
     @inlinable
     public mutating func removeAll<K: Hash.Key & ~Copyable, V: ~Copyable>(keepingCapacity: Bool = true)
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         store.removeAll(keepingCapacity: keepingCapacity)
     }
 
@@ -241,10 +241,10 @@ extension Dictionary where S: ~Copyable {
     /// strategy-less init, and removeAll → copy → mutate trapped the uniqueness gate).
     @inlinable
     public mutating func removeAll<K: Hash.Key, V>(keepingCapacity: Bool = true)
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         let capacity: Index_Primitives.Index<Hash.Entry<K, V>>.Count = keepingCapacity ? store.capacity : .zero
         self.store = Shared(
-            Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>(minimumCapacity: capacity)
+            Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>(minimumCapacity: capacity)
         )
     }
 
@@ -254,10 +254,10 @@ extension Dictionary where S: ~Copyable {
     /// the column), so this box can never be forked and a strategy is unreachable.
     @inlinable
     public mutating func removeAll<K: Hash.Key & ~Copyable, V: ~Copyable>(keepingCapacity: Bool = true)
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         let capacity: Index_Primitives.Index<Hash.Entry<K, V>>.Count = keepingCapacity ? store.capacity : .zero
         self.store = Shared(
-            Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>(minimumCapacity: capacity)
+            Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>(minimumCapacity: capacity)
         )
     }
 }
@@ -272,7 +272,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(n)
     @inlinable
     public func forEach<K: Hash.Key & ~Copyable, V: ~Copyable>(_ body: (borrowing K, borrowing V) -> Void)
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         store.forEach { entry in body(entry.key, entry.value) }
     }
 
@@ -281,7 +281,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(n)
     @inlinable
     public func forEach<K: Hash.Key & ~Copyable, V: ~Copyable>(_ body: (borrowing K, borrowing V) -> Void)
-    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
+    where S == Shared<Hash.Entry<K, V>, Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear>> {
         store.withColumn { column in
             column.forEach { entry in body(entry.key, entry.value) }
         }
@@ -292,7 +292,7 @@ extension Dictionary where S: ~Copyable {
     /// - Complexity: O(`capacity`)
     @inlinable
     public func clone<K: Hash.Key, V>() -> Self
-    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<K, V>>>.Linear> {
+    where S == Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<K, V>>>.Linear> {
         Self(store: store.clone())
     }
 }
