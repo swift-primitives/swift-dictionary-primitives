@@ -308,7 +308,7 @@ These errors are dictionary-discipline because they encode key-specific context 
 | CoW mechanism | `ensureUnique()` |
 | Element init/move/deinit lifecycle | Via `Storage` |
 | Raw pointer access | `pointer(at:)` |
-| Contiguous memory guarantee | `Memory.Contiguous.Protocol` |
+| Contiguous memory guarantee | `Span.Protocol` |
 | Unchecked subscript | Direct pointer arithmetic |
 
 #### Hash.Table Owns (Static variant only)
