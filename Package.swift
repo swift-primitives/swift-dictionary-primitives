@@ -36,10 +36,6 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-ordinal-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-tagged-primitives.git", branch: "main"),
-        // NOTE: the iteration concern (swift-iterator-primitives), the Slab plane
-        // (swift-buffer-slab-primitives), and the old Core/Slab support deps are NOT
-        // dependencies — they retired with the two-planes shape (ADT-families leg 8).
-        // The keyed core is iteration-free; `forEach` rides the dense plane.
     ],
     targets: [
 
